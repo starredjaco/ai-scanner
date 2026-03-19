@@ -1,0 +1,192 @@
+<%
+  # Build action buttons for the header
+  action_buttons = []
+  unless @quota_exhausted
+    action_buttons << {
+      label: "New Scan",
+      path: new_scan_path,
+      variant: :default,
+      color: :primary,
+      size: :base
+    }
+  end
+%>
+
+<%= render partial: "admin/shared/table_header", locals: { title: "Scans", current_page: :index, action_buttons: action_buttons } %>
+
+<%# Scope tabs with counts %>
+<div class="mb-4">
+  <div class="flex flex-wrap gap-2">
+    <%= link_to scans_path(scope: "scheduled"),
+        class: "inline-flex items-center gap-2 px-3 py-2 text-sm font-medium transition-colors rounded-lg #{@current_scope == 'scheduled' ? 'text-primary' : 'text-contentTertiary hover:text-white'}" do %>
+      Scheduled
+      <span class="px-2 py-0.5 text-xs rounded-md <%= @current_scope == 'scheduled' ? 'bg-orange-950 text-primary' : 'bg-borderInversePrimary text-contentTertiary' %>"><%= @scheduled_count %></span>
+    <% end %>
+    <%= link_to scans_path(scope: "unscheduled"),
+        class: "inline-flex items-center gap-2 px-3 py-2 text-sm font-medium transition-colors rounded-lg #{@current_scope == 'unscheduled' ? 'text-primary' : 'text-contentTertiary hover:text-white'}" do %>
+      One-time
+      <span class="px-2 py-0.5 text-xs rounded-md <%= @current_scope == 'unscheduled' ? 'bg-orange-950 text-primary' : 'bg-borderInversePrimary text-contentTertiary' %>"><%= @unscheduled_count %></span>
+    <% end %>
+    <%= link_to scans_path(scope: "all"),
+        class: "inline-flex items-center gap-2 px-3 py-2 text-sm font-medium transition-colors rounded-lg #{@current_scope == 'all' ? 'text-primary' : 'text-contentTertiary hover:text-white'}" do %>
+      All
+      <span class="px-2 py-0.5 text-xs rounded-md <%= @current_scope == 'all' ? 'bg-orange-950 text-primary' : 'bg-borderInversePrimary text-contentTertiary' %>"><%= @all_count %></span>
+    <% end %>
+  </div>
+</div>
+
+<%# Card wrapper for filter panel and table %>
+<div class="rounded-lg bg-backgroundPrimary border border-borderPrimary overflow-hidden">
+  <%# Filter Panel %>
+  <%
+    filters = [
+      { key: :targets, label: "Target", type: :association, collection: @filter_targets },
+      { key: :name, label: "Name", type: :text, placeholder: "Search by name..." },
+      { key: :created_at, label: "Created", type: :date_range }
+    ]
+  %>
+  <%= render "shared/filter/filter_panel",
+      ransack: @q,
+      filters: filters,
+      form_url: scans_path(scope: @current_scope) %>
+
+<%
+  # Determine if we should show schedule column
+  show_schedule = @current_scope == "scheduled" || @current_scope.nil?
+
+  columns = [
+    {
+      key: :name,
+      label: "Name",
+      type: :link,
+      link_path: ->(scan) { scan_path(scan) },
+      link_class: "text-primary hover:underline",
+      sortable: true
+    },
+    {
+      key: :targets_count,
+      label: "Targets",
+      type: :custom,
+      render: ->(scan) {
+        content_tag(:span, scan.targets.size, title: scan.targets.map(&:name).join(", "), class: "text-sm text-textMuted cursor-help")
+      }
+    },
+    {
+      key: :probes_count,
+      label: "Probes",
+      type: :number,
+      value: ->(scan) { scan.probes.size }
+    },
+    {
+      key: :reports_count,
+      label: "Reports",
+      type: :number,
+      sortable: true,
+      value: ->(scan) { scan.reports_count }
+    },
+    {
+      key: :avg_successful_attacks,
+      label: "ASR",
+      type: :custom,
+      sortable: true,
+      header_suffix: -> {
+        content_tag(:div, class: "relative flex-shrink-0", data: { controller: "tooltip" }) do
+          safe_join([
+            content_tag(:button, type: "button", class: "flex-shrink-0", aria: { label: "Information about ASR" }, data: { action: "mouseenter->tooltip#show mouseleave->tooltip#hide" }) do
+              content_tag(:span, "", class: "icon icon-sm icon-info text-zinc-300")
+            end,
+            content_tag(:div, class: "hidden absolute left-0 top-full mt-2 w-64 bg-[#27272A] rounded-xl shadow-lg z-50 p-3", data: { tooltip_target: "popup", action: "click->tooltip#stopPropagation" }) do
+              content_tag(:p, t('tables.tooltips.asr'), class: "text-zinc-400 font-sans text-xs leading-relaxed normal-case")
+            end
+          ])
+        end
+      },
+      render: ->(scan) {
+        if scan.avg_successful_attacks.present?
+          content_tag(:span, "#{scan.avg_successful_attacks.round(1)}%", class: "text-sm font-semibold #{asr_color_class(scan.avg_successful_attacks)}")
+        else
+          content_tag(:span, "—", class: "text-sm text-zinc-500")
+        end
+      }
+    }
+  ]
+
+  # Add schedule column conditionally
+  if show_schedule
+    columns << {
+      key: :schedule,
+      label: "Schedule",
+      type: :custom,
+      render: ->(scan) {
+        if scan.recurrence.present?
+          content_tag(:div, class: "flex items-center gap-1") do
+            safe_join([
+              content_tag(:span, "", class: "icon icon-sm icon-clock text-zinc-400"),
+              content_tag(:span, scan_format_recurrence_schedule(scan.recurrence), class: "text-sm text-textMuted")
+            ])
+          end
+        else
+          content_tag(:span, "Not scheduled", class: "text-sm text-zinc-500 italic")
+        end
+      }
+    }
+  end
+
+  columns += [
+    {
+      key: :auto_update,
+      label: "Auto-Update",
+      type: :custom,
+      render: ->(scan) {
+        if scan.auto_updating_categories.any?
+          content_tag(:div, class: "flex items-center gap-1") do
+            safe_join([
+              content_tag(:span, "🔄", class: "text-green-600"),
+              content_tag(:span, scan.auto_updating_categories.join(", "), class: "text-xs text-textMuted")
+            ])
+          end
+        else
+          content_tag(:span, "—", class: "text-sm text-textMuted")
+        end
+      }
+    },
+    {
+      key: :created_at,
+      label: "Created On",
+      type: :date,
+      sortable: true
+    },
+    (unless @quota_exhausted
+      {
+        key: :actions,
+        label: "Actions",
+        type: :custom,
+        align: :right,
+        render: ->(scan) {
+          content_tag(:div, class: "flex items-center justify-end gap-3") do
+            safe_join([
+              link_to(reports_path(q: { scan_id_eq: scan.id }), class: "text-actionButton hover:text-textMuted transition-colors", title: "View Reports") do
+                content_tag(:span, "", class: "icon icon-sm icon-view")
+              end,
+              button_to(rerun_scan_path(scan), method: :post, form: { data: { turbo: true }, class: "inline-flex items-center" }, class: "text-actionButton hover:text-textMuted transition-colors cursor-pointer", title: "Rerun Scan") do
+                content_tag(:span, "", class: "icon icon-sm icon-restore")
+              end
+            ])
+          end
+        }
+      }
+    end)
+  ].compact
+%>
+
+  <%= render "shared/table/table",
+      collection: @scans,
+      columns: columns,
+      ransack: @q,
+      pagy: @pagy,
+      batch_actions: [:rerun, :delete],
+      batch_form_url: batch_scans_path(scope: @current_scope),
+      empty_message: "No scans found",
+      empty_action: { label: "Create Scan", path: new_scan_path }
+  %>
+</div>

@@ -1,0 +1,15 @@
+<%# Link cell - clickable text link %>
+<% link_path = table_cell_link_path(item, column) %>
+<% link_text = value || column[:default] || "—" %>
+<% target = column[:target] || nil %>
+<% default_class = "text-sm text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 hover:underline" %>
+<% link_class = column[:link_class] || default_class %>
+
+<% if link_path.present? %>
+  <%= link_to link_text, link_path,
+      class: "#{link_class} #{column[:truncate] ? 'truncate max-w-xs block' : ''}",
+      target: target,
+      title: column[:truncate] ? link_text : nil %>
+<% else %>
+  <span class="text-sm text-gray-500 dark:text-gray-400 italic"><%= column[:default] || "—" %></span>
+<% end %>

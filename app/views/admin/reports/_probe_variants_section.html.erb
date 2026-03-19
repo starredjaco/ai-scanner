@@ -1,0 +1,44 @@
+<%
+  probe_result = local_assigns[:probe_result]
+  report = local_assigns[:report]
+  index = local_assigns[:index] || 0
+  preloaded = local_assigns[:preloaded]
+
+  variant_attacks = preloaded[:attack_counts][probe_result.probe_id] || { total: 0, passed: 0 }
+  variant_success_rate = preloaded[:success_rates][probe_result.probe_id] || 0
+
+  variant_rate_color = asr_color_class(variant_success_rate)
+%>
+
+<% if variant_attacks[:total] > 0 %>
+<div class="flex flex-col gap-2">
+  <button class="flex items-center justify-between w-full cursor-pointer hover:bg-zinc-800/30 rounded-lg transition-colors py-2 px-1"
+          data-action="click->report-redesigned#toggleProbeVariants"
+          data-probe-index="<%= index %>">
+
+    <span class="text-lg text-white font-sans">Variants</span>
+
+    <span class="icon icon-sm icon-chevron-down text-contentTertiary transition-transform duration-200 ml-auto"
+          data-report-redesigned-target="variantChevron"
+          data-probe-index="<%= index %>"
+          style="transform: rotate(0deg)"></span>
+  </button>
+
+  <div class="hidden"
+       data-report-redesigned-target="variantContent"
+       data-probe-index="<%= index %>">
+    <div class="flex flex-col gap-4 pl-4 w-full">
+      <div class="border border-zinc-700 rounded-lg p-4 bg-zinc-900/50">
+        <%
+          all_industries = local_assigns[:all_industries] || report.all_selected_variant_industries_grouped
+          probe_results_map = preloaded[:subindustry_maps][probe_result.probe_id] || {}
+        %>
+        <%= render partial: 'admin/reports/variant_industries_pills', locals: {
+          industries_grouped: all_industries,
+          probe_results_map: probe_results_map
+        } %>
+      </div>
+    </div>
+  </div>
+</div>
+<% end %>

@@ -1,0 +1,40 @@
+<%# Pagination partial for admin views using Pagy %>
+<% if pagy.present? && pagy.pages > 1 %>
+  <%
+    current_page = pagy.page
+    total_pages = pagy.pages
+    per_page = pagy.limit
+    offset = pagy.offset
+    total_count = pagy.count
+
+    # Calculate showing range
+    showing_from = offset + 1
+    showing_to = [offset + per_page, total_count].min
+  %>
+  <div class="pagination-container mt-6 flex items-center justify-between border-t border-gray-200 dark:border-gray-700 pt-4">
+    <div class="flex-1 flex justify-between sm:hidden">
+      <% if pagy.prev %>
+        <%= link_to "Previous", url_for(request.query_parameters.merge(page: pagy.prev)), class: "relative inline-flex items-center px-4 py-2 text-sm font-medium rounded-md text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700" %>
+      <% end %>
+      <% if pagy.next %>
+        <%= link_to "Next", url_for(request.query_parameters.merge(page: pagy.next)), class: "ml-3 relative inline-flex items-center px-4 py-2 text-sm font-medium rounded-md text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700" %>
+      <% end %>
+    </div>
+    <div class="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
+      <div>
+        <p class="text-sm text-gray-700 dark:text-gray-300">
+          Showing
+          <span class="font-medium"><%= showing_from %></span>
+          to
+          <span class="font-medium"><%= showing_to %></span>
+          of
+          <span class="font-medium"><%= total_count %></span>
+          results
+        </p>
+      </div>
+      <div>
+        <%== pagy_nav(pagy) %>
+      </div>
+    </div>
+  </div>
+<% end %>

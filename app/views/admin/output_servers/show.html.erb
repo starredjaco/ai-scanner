@@ -1,0 +1,107 @@
+<%
+  action_buttons = [
+    { label: "Test Integration", path: test_output_server_path(@output_server), method: :post, variant: :default, color: :gray, size: :base, icon: "icon-check-circle" },
+    { label: "Edit", path: edit_output_server_path(@output_server), variant: :default, color: :gray, size: :base, icon: "icon-edit" },
+    { label: "Delete", path: output_server_path(@output_server), method: :delete, data: { turbo_confirm: "Are you sure you want to delete this integration?" }, variant: :default, color: :gray, size: :base, icon: "icon-trash" }
+  ]
+%>
+<%= render partial: "admin/shared/show_header", locals: { title: "Integration: #{@output_server.name}", action_buttons: action_buttons } %>
+
+<div class="py-6">
+  <div class="rounded-lg bg-backgroundPrimary border border-borderPrimary p-6 mb-6">
+    <table class="w-full">
+      <tbody class="divide-y divide-borderPrimary">
+        <tr>
+          <th class="py-3 pr-4 text-left text-sm font-medium text-contentSecondary w-1/4">Name</th>
+          <td class="py-3 text-sm text-contentPrimary"><%= @output_server.name %></td>
+        </tr>
+        <tr>
+          <th class="py-3 pr-4 text-left text-sm font-medium text-contentSecondary w-1/4">Server Type</th>
+          <td class="py-3 text-sm text-contentPrimary"><%= @output_server.server_type&.humanize || content_tag(:span, "—", class: "text-contentTertiary") %></td>
+        </tr>
+        <tr>
+          <th class="py-3 pr-4 text-left text-sm font-medium text-contentSecondary w-1/4">Host</th>
+          <td class="py-3 text-sm text-contentPrimary"><code class="bg-backgroundSecondary px-2 py-1 rounded text-xs font-mono text-contentPrimary"><%= @output_server.host %></code></td>
+        </tr>
+        <tr>
+          <th class="py-3 pr-4 text-left text-sm font-medium text-contentSecondary w-1/4">Port</th>
+          <td class="py-3 text-sm text-contentPrimary"><%= @output_server.port || content_tag(:span, "—", class: "text-contentTertiary") %></td>
+        </tr>
+        <tr>
+          <th class="py-3 pr-4 text-left text-sm font-medium text-contentSecondary w-1/4">Protocol</th>
+          <td class="py-3 text-sm text-contentPrimary"><%= @output_server.protocol&.upcase || content_tag(:span, "—", class: "text-contentTertiary") %></td>
+        </tr>
+        <tr>
+          <th class="py-3 pr-4 text-left text-sm font-medium text-contentSecondary w-1/4">Endpoint Path</th>
+          <td class="py-3 text-sm text-contentPrimary">
+            <% if @output_server.endpoint_path.present? %>
+              <code class="bg-backgroundSecondary px-2 py-1 rounded text-xs font-mono text-contentPrimary"><%= @output_server.endpoint_path %></code>
+            <% else %>
+              <span class="text-contentTertiary">—</span>
+            <% end %>
+          </td>
+        </tr>
+        <tr>
+          <th class="py-3 pr-4 text-left text-sm font-medium text-contentSecondary w-1/4">Access Token</th>
+          <td class="py-3 text-sm text-contentPrimary">
+            <% if @output_server.access_token.present? %>
+              <code class="bg-backgroundSecondary px-2 py-1 rounded text-xs font-mono text-contentPrimary"><%= mask_access_token(@output_server.access_token) %></code>
+            <% else %>
+              <span class="text-contentTertiary">—</span>
+            <% end %>
+          </td>
+        </tr>
+        <tr>
+          <th class="py-3 pr-4 text-left text-sm font-medium text-contentSecondary w-1/4">API Key</th>
+          <td class="py-3 text-sm text-contentPrimary">
+            <% if @output_server.api_key.present? %>
+              <code class="bg-backgroundSecondary px-2 py-1 rounded text-xs font-mono text-contentPrimary"><%= mask_api_key(@output_server.api_key) %></code>
+            <% else %>
+              <span class="text-contentTertiary">—</span>
+            <% end %>
+          </td>
+        </tr>
+        <tr>
+          <th class="py-3 pr-4 text-left text-sm font-medium text-contentSecondary w-1/4">Username</th>
+          <td class="py-3 text-sm text-contentPrimary"><%= @output_server.username.presence || content_tag(:span, "—", class: "text-contentTertiary") %></td>
+        </tr>
+        <tr>
+          <th class="py-3 pr-4 text-left text-sm font-medium text-contentSecondary w-1/4">Password</th>
+          <td class="py-3 text-sm text-contentPrimary">
+            <% if @output_server.password.present? %>
+              <code class="bg-backgroundSecondary px-2 py-1 rounded text-xs font-mono text-contentPrimary"><%= mask_sensitive_value(@output_server.password) %></code>
+            <% else %>
+              <span class="text-contentTertiary">—</span>
+            <% end %>
+          </td>
+        </tr>
+        <tr>
+          <th class="py-3 pr-4 text-left text-sm font-medium text-contentSecondary w-1/4">Additional Settings</th>
+          <td class="py-3 text-sm text-contentPrimary">
+            <% if @output_server.additional_settings.present? %>
+              <pre class="bg-backgroundSecondary px-3 py-2 rounded text-sm font-mono text-contentPrimary overflow-x-auto"><%= @output_server.additional_settings %></pre>
+            <% else %>
+              <span class="text-contentTertiary">—</span>
+            <% end %>
+          </td>
+        </tr>
+        <tr>
+          <th class="py-3 pr-4 text-left text-sm font-medium text-contentSecondary w-1/4">Enabled</th>
+          <td class="py-3 text-sm text-contentPrimary"><%= status_tag(@output_server.enabled ? "Yes" : "No", @output_server.enabled ? :ok : nil) %></td>
+        </tr>
+        <tr>
+          <th class="py-3 pr-4 text-left text-sm font-medium text-contentSecondary w-1/4">Description</th>
+          <td class="py-3 text-sm text-contentPrimary"><%= @output_server.description.presence || content_tag(:span, "—", class: "text-contentTertiary") %></td>
+        </tr>
+        <tr>
+          <th class="py-3 pr-4 text-left text-sm font-medium text-contentSecondary w-1/4">Created On</th>
+          <td class="py-3 text-sm text-contentPrimary"><%= format_created_date(@output_server.created_at) %></td>
+        </tr>
+        <tr>
+          <th class="py-3 pr-4 text-left text-sm font-medium text-contentSecondary w-1/4">Updated At</th>
+          <td class="py-3 text-sm text-contentPrimary"><%= @output_server.updated_at.strftime("%B %d, %Y %H:%M") %></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>

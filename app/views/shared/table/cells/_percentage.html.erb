@@ -1,0 +1,10 @@
+<%# Percentage cell with color coding %>
+<% if value.present? %>
+  <% rate = value.is_a?(Numeric) ? value : value.to_f %>
+  <% color_class = success_rate_color_class(rate) %>
+  <span class="text-sm font-semibold <%= color_class %>">
+    <%= number_with_precision(rate, precision: 1) %>%
+  </span>
+<% else %>
+  <span class="text-sm text-gray-500 dark:text-gray-400 italic">No Data</span>
+<% end %>

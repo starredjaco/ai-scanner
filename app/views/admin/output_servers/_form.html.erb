@@ -1,0 +1,230 @@
+<%= form_with model: output_server, url: output_server.persisted? ? output_server_path(output_server) : output_servers_path, local: true, class: "space-y-6" do |f| %>
+  <% if output_server.errors.any? %>
+    <div class="bg-red-950/20 border border-red-400/30 rounded-lg p-4">
+      <div class="flex">
+        <span class="icon icon-md icon-x-circle text-red-400 mr-2 shrink-0"></span>
+        <div>
+          <h3 class="text-sm font-medium text-contentPrimary">
+            <%= pluralize(output_server.errors.count, "error") %> prohibited this integration from being saved:
+          </h3>
+          <ul class="mt-2 text-sm text-contentSecondary list-disc list-inside">
+            <% output_server.errors.full_messages.each do |message| %>
+              <li><%= message %></li>
+            <% end %>
+          </ul>
+        </div>
+      </div>
+    </div>
+  <% end %>
+
+  <div class="rounded-lg bg-backgroundPrimary border border-borderPrimary">
+    <div class="p-6 space-y-6">
+      <%# Section: Basic Information %>
+      <h3 class="text-xl font-sans font-semibold text-primary tracking-wide mb-4">
+        Basic Information
+      </h3>
+
+      <div>
+        <%= f.label :name, class: "block text-sm font-medium text-contentSecondary mb-2" %>
+        <%= f.text_field :name,
+            required: true,
+            placeholder: "e.g., Production Splunk",
+            class: "input-base" %>
+      </div>
+
+      <div>
+        <%= f.label :server_type, "Server Type", class: "block text-sm font-medium text-contentSecondary mb-2" %>
+        <%= f.select :server_type,
+            options_for_select(
+              available_server_types.map { |type| [ type.humanize, type ] },
+              output_server.server_type
+            ),
+            { include_blank: "Select a server type" },
+            { required: true, class: "input-select" } %>
+      </div>
+
+      <%# Section: Connection Settings %>
+      <div class="border-t border-borderPrimary pt-6">
+        <h3 class="text-base font-sans font-semibold text-white tracking-wide mb-4">
+          Connection Settings
+        </h3>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div>
+          <%= f.label :host, class: "block text-sm font-medium text-contentSecondary mb-2" %>
+          <%= f.text_field :host,
+              placeholder: "e.g., logs.example.com",
+              class: "input-base font-mono" %>
+        </div>
+
+        <div>
+          <%= f.label :port, class: "block text-sm font-medium text-contentSecondary mb-2" %>
+          <%= f.number_field :port,
+              min: 1,
+              max: 65535,
+              placeholder: "e.g., 443",
+              class: "input-base" %>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div>
+          <%= f.label :protocol, class: "block text-sm font-medium text-contentSecondary mb-2" %>
+          <%= f.select :protocol,
+              options_for_select(
+                OutputServer.protocols.keys.map { |p| [p.upcase, p] },
+                output_server.protocol
+              ),
+              { include_blank: "Select a protocol" },
+              { required: true, class: "input-select" } %>
+        </div>
+
+        <div>
+          <%= f.label :endpoint_path, "Endpoint Path", class: "block text-sm font-medium text-contentSecondary mb-2" %>
+          <%= f.text_field :endpoint_path,
+              placeholder: "/api/endpoint",
+              class: "input-base font-mono" %>
+        </div>
+      </div>
+
+      <%# Section: Authentication %>
+      <div class="border-t border-borderPrimary pt-6">
+        <h3 class="text-base font-sans font-semibold text-white tracking-wide mb-4">
+          Authentication
+        </h3>
+      </div>
+
+      <div data-controller="password-visibility">
+        <%= f.label :access_token, "Access Token", class: "block text-sm font-medium text-contentSecondary mb-2" %>
+        <div class="relative">
+          <%= f.text_field :access_token,
+              type: "password",
+              placeholder: output_server.access_token.present? ? "••••••••••••" : "Enter access token",
+              data: { password_visibility_target: "field" },
+              class: "input-base pr-10 font-mono" %>
+          <button type="button"
+                  class="absolute right-2 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 focus:outline-none bg-transparent border-0 p-1 pointer-events-auto cursor-pointer"
+                  data-action="click->password-visibility#toggle">
+            <span class="icon icon-sm icon-eye" data-password-visibility-target="eyeIcon"></span>
+            <span class="icon icon-sm icon-eye-slash hidden" data-password-visibility-target="eyeSlashIcon"></span>
+          </button>
+        </div>
+      </div>
+
+      <div data-controller="password-visibility">
+        <%= f.label :api_key, "API Key", class: "block text-sm font-medium text-contentSecondary mb-2" %>
+        <div class="relative">
+          <%= f.text_field :api_key,
+              type: "password",
+              placeholder: output_server.api_key.present? ? "••••••••••••" : "Enter API key",
+              data: { password_visibility_target: "field" },
+              class: "input-base pr-10 font-mono" %>
+          <button type="button"
+                  class="absolute right-2 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 focus:outline-none bg-transparent border-0 p-1 pointer-events-auto cursor-pointer"
+                  data-action="click->password-visibility#toggle">
+            <span class="icon icon-sm icon-eye" data-password-visibility-target="eyeIcon"></span>
+            <span class="icon icon-sm icon-eye-slash hidden" data-password-visibility-target="eyeSlashIcon"></span>
+          </button>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div>
+          <%= f.label :username, class: "block text-sm font-medium text-contentSecondary mb-2" %>
+          <%= f.text_field :username,
+              placeholder: "Enter username",
+              class: "input-base" %>
+        </div>
+
+        <div data-controller="password-visibility">
+          <%= f.label :password, class: "block text-sm font-medium text-contentSecondary mb-2" %>
+          <div class="relative">
+            <%= f.password_field :password,
+                placeholder: output_server.password.present? ? "••••••••••••" : "Enter password",
+                data: { password_visibility_target: "field" },
+                class: "input-base pr-10" %>
+            <button type="button"
+                    class="absolute right-2 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 focus:outline-none bg-transparent border-0 p-1 pointer-events-auto cursor-pointer"
+                    data-action="click->password-visibility#toggle">
+              <span class="icon icon-sm icon-eye" data-password-visibility-target="eyeIcon"></span>
+              <span class="icon icon-sm icon-eye-slash hidden" data-password-visibility-target="eyeSlashIcon"></span>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <%# Section: Advanced Settings %>
+      <div class="border-t border-borderPrimary pt-6">
+        <h3 class="text-base font-sans font-semibold text-white tracking-wide mb-4">
+          Advanced Settings
+        </h3>
+      </div>
+
+      <div data-controller="json-editor">
+        <%= f.label :additional_settings, "Additional Settings (JSON)", class: "block text-sm font-medium text-contentSecondary mb-2" %>
+        <div class="relative">
+          <%= f.text_area :additional_settings,
+              rows: 6,
+              class: "input-textarea font-mono resize-y min-h-[120px]",
+              placeholder: %({
+  "headers": {
+    "X-Custom-Header": "value"
+  },
+  "tls_cert_file": "/storage/certs/cert.pem"
+}),
+              data: {
+                "json-editor-target": "textarea",
+                action: "blur->json-editor#validateJson input->json-editor#updateCounter"
+              } %>
+          <div class="absolute top-2 right-2 hidden" data-json-editor-target="indicator">
+            <span class="inline-flex items-center px-2 py-1 text-xs font-medium rounded-full"
+                  data-json-editor-target="status"></span>
+          </div>
+        </div>
+        <div class="mt-1 flex justify-between text-xs">
+          <div data-json-editor-target="validation" class="text-red-500 dark:text-red-400 hidden"></div>
+          <div class="ml-auto text-gray-500 dark:text-gray-400" data-json-editor-target="counter"></div>
+        </div>
+      </div>
+
+      <div class="flex items-center">
+        <%= f.check_box :enabled %>
+        <%= f.label :enabled, "Enabled", class: "ml-2 block text-sm text-gray-700 dark:text-gray-300" %>
+      </div>
+
+      <div data-controller="character-counter" data-character-counter-max-value="500">
+        <%= f.label :description, class: "block text-sm font-medium text-contentSecondary mb-2" %>
+        <%= f.text_area :description,
+            rows: 3,
+            maxlength: 500,
+            class: "input-textarea resize-y min-h-[80px]",
+            placeholder: "Describe this integration's purpose...",
+            data: {
+              action: "input->character-counter#update",
+              "character-counter-target": "input"
+            } %>
+        <div class="mt-1 text-right text-xs text-gray-500 dark:text-gray-400">
+          <span data-character-counter-target="count"><%= output_server.description&.length || 0 %></span>
+          <span> / 500 characters</span>
+        </div>
+      </div>
+
+      <%# Form Actions %>
+      <div class="flex items-center justify-end gap-3 pt-4">
+        <%= link_to "Cancel",
+            output_server.new_record? ? output_servers_path : output_server_path(output_server),
+            class: "btn-base btn-base-size btn-default-gray" %>
+        <% if output_server.persisted? %>
+          <%= button_to "Test Integration", test_output_server_path(output_server),
+              method: :post,
+              class: "btn-base btn-base-size btn-default-gray",
+              form: { style: "display: inline" } %>
+        <% end %>
+        <%= button_tag type: "submit", class: "btn-base btn-base-size btn-default-primary" do %>
+          <%= output_server.new_record? ? "Create Integration" : "Update Integration" %>
+        <% end %>
+      </div>
+    </div>
+  </div>
+<% end %>

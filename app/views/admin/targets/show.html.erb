@@ -1,0 +1,250 @@
+<%
+  action_buttons = []
+
+  unless @target.deleted?
+    action_buttons << { label: "Edit", path: edit_target_path(@target), icon: "icon-edit", variant: :default, color: :gray, size: :base }
+    action_buttons << { label: "Delete", path: target_path(@target), method: :delete, icon: "icon-trash", variant: :default, color: :gray, size: :base, data: { turbo_confirm: "Are you sure you want to delete this target?" } }
+  end
+
+  action_buttons << { label: "ENV Vars", path: target_environment_variables_path(@target), icon: "icon-variable", variant: :default, color: :gray, size: :base }
+  action_buttons << { label: "Reports", path: reports_path(q: { target_id_eq: @target.id }), icon: "icon-document", variant: :default, color: :gray, size: :base }
+
+  unless @target.deleted?
+    action_buttons << { label: "Validate", path: validate_target_path(@target), method: :post, icon: "icon-check", variant: :default, color: :gray, size: :base, data: { turbo_confirm: "Are you sure you want to validate this target?" } }
+  end
+
+  action_buttons << { label: "Run Scan", path: new_scan_path(target_id: @target.id), icon: "icon-play", variant: :default, color: :primary, size: :base }
+
+  if @target.deleted?
+    action_buttons << { label: "Restore", path: restore_target_path(@target), method: :patch, icon: "icon-restore", variant: :default, color: :gray, size: :base, data: { turbo_confirm: "Are you sure you want to restore this target?" } }
+  end
+%>
+<%= render partial: "admin/shared/show_header", locals: { title: "Target: #{@target.name}", action_buttons: action_buttons } %>
+
+<script src="/js/echarts.js" defer></script>
+
+<div class="py-6">
+<%
+  # Build validation status tag
+  validation_status = case @target.status
+  when "good"
+    content_tag(:span, "Good", class: "status_tag good")
+  when "validating"
+    content_tag(:span, "Validating", class: "status_tag validating")
+  when "bad"
+    content_tag(:span, "Bad", class: "status_tag bad")
+  else
+    @target.status&.humanize
+  end
+
+  # Build availability status
+  availability = if @target.deleted?
+    content_tag(:span, "Deleted on #{@target.deleted_at.strftime('%Y-%m-%d %H:%M')}", class: "status_tag deleted")
+  else
+    content_tag(:span, "Active", class: "status_tag active")
+  end
+
+  # Build JSON config display
+  json_config_display = if @target.json_config.present?
+    begin
+      json_data = JSON.parse(@target.json_config)
+      JSON.pretty_generate(json_data)
+    rescue JSON::ParserError
+      @target.json_config
+    end
+  else
+    nil
+  end
+
+  # Build scheduled scans display (uses @scheduled_scans from controller)
+  scheduled_scans_display = if @scheduled_scans.any?
+    safe_join(@scheduled_scans.map { |scan|
+      schedule_text = scan_format_recurrence_schedule(scan.recurrence)
+      safe_join([link_to(scan.name, scan_path(scan), class: "text-primary hover:text-primary-400 hover:underline transition-colors"), " (#{schedule_text})"])
+    }, ", ")
+  else
+    nil
+  end
+%>
+
+  <div class="rounded-lg bg-backgroundPrimary border border-borderPrimary p-6 mb-6">
+    <h3 class="text-xl font-sans font-semibold text-primary tracking-wide mb-6">METADATA</h3>
+    <table class="w-full">
+      <tbody class="divide-y divide-borderPrimary">
+        <tr>
+          <th class="py-3 pr-4 text-left text-sm font-medium text-contentSecondary w-1/4">Target Type</th>
+          <td class="py-3 text-sm text-contentPrimary"><%= @target.target_type.humanize %></td>
+        </tr>
+        <% if @target.webchat? %>
+          <tr>
+            <th class="py-3 pr-4 text-left text-sm font-medium text-contentSecondary w-1/4">Web Chat URL</th>
+            <td class="py-3 text-sm text-contentPrimary">
+              <% if @target.web_chat_url.present? %>
+                <%= link_to @target.web_chat_url, @target.web_chat_url, target: "_blank", class: "text-primary hover:text-primary-400 no-underline transition-colors" %>
+              <% else %>
+                <span class="text-contentTertiary">—</span>
+              <% end %>
+            </td>
+          </tr>
+          <tr>
+            <th class="py-3 pr-4 text-left text-sm font-medium text-contentSecondary w-1/4">Chat Selectors</th>
+            <td class="py-3 text-sm text-contentPrimary">
+              <% selectors = @target.web_chat_selectors %>
+              <% if selectors.values.any?(&:present?) %>
+                <% selectors.each do |key, value| %>
+                  <% next if value.blank? %>
+                  <div class="mb-0.5"><span class="font-medium text-contentPrimary text-sm"><%= key.to_s.humanize %>:</span> <code class="bg-zinc-800 px-1.5 py-0.5 rounded text-xs font-mono text-zinc-300"><%= value %></code></div>
+                <% end %>
+              <% else %>
+                <span class="text-contentTertiary">—</span>
+              <% end %>
+            </td>
+          </tr>
+        <% else %>
+          <tr>
+            <th class="py-3 pr-4 text-left text-sm font-medium text-contentSecondary w-1/4">Model Type</th>
+            <td class="py-3 text-sm text-contentPrimary"><%= @target.model_type.presence || content_tag(:span, "—", class: "text-contentTertiary") %></td>
+          </tr>
+          <tr>
+            <th class="py-3 pr-4 text-left text-sm font-medium text-contentSecondary w-1/4">Model</th>
+            <td class="py-3 text-sm text-contentPrimary"><%= @target.model.presence || content_tag(:span, "—", class: "text-contentTertiary") %></td>
+          </tr>
+        <% end %>
+        <tr>
+          <th class="py-3 pr-4 text-left text-sm font-medium text-contentSecondary w-1/4">Status</th>
+          <td class="py-3 text-sm text-contentPrimary"><%= validation_status %></td>
+        </tr>
+        <% if @target.description.present? %>
+          <tr>
+            <th class="py-3 pr-4 text-left text-sm font-medium text-contentSecondary w-1/4">Description</th>
+            <td class="py-3 text-sm text-contentPrimary"><%= @target.description %></td>
+          </tr>
+        <% end %>
+        <% if @target.bad? && @target.validation_text.present? %>
+          <tr>
+            <th class="py-3 pr-4 text-left text-sm font-medium text-contentSecondary w-1/4">Validation</th>
+            <td class="py-3 text-sm text-contentPrimary"><%= @target.validation_text %></td>
+          </tr>
+        <% end %>
+        <% if json_config_display.present? %>
+          <tr>
+            <th class="py-3 pr-4 text-left text-sm font-medium text-contentSecondary w-1/4">JSON Config</th>
+            <td class="py-3 text-sm text-contentPrimary">
+              <pre class="p-3 bg-zinc-800/50 rounded-lg text-xs font-mono overflow-x-auto whitespace-pre-wrap text-zinc-300"><%= json_config_display %></pre>
+            </td>
+          </tr>
+        <% end %>
+        <tr>
+          <th class="py-3 pr-4 text-left text-sm font-medium text-contentSecondary w-1/4">Created On</th>
+          <td class="py-3 text-sm text-contentPrimary"><%= format_created_date(@target.created_at) %></td>
+        </tr>
+        <tr>
+          <th class="py-3 pr-4 text-left text-sm font-medium text-contentSecondary w-1/4">Updated At</th>
+          <td class="py-3 text-sm text-contentPrimary"><%= @target.updated_at.strftime("%B %d, %Y %H:%M") %></td>
+        </tr>
+        <tr>
+          <th class="py-3 pr-4 text-left text-sm font-medium text-contentSecondary w-1/4">Availability</th>
+          <td class="py-3 text-sm text-contentPrimary"><%= availability %></td>
+        </tr>
+        <% unless @target.webchat? %>
+          <tr>
+            <th class="py-3 pr-4 text-left text-sm font-medium text-contentSecondary w-1/4">Performance</th>
+            <td class="py-3 text-sm text-contentPrimary">
+              <% if @target.tokens_per_second.present? %>
+                <span class="font-semibold text-contentPrimary">
+                  <%= number_with_precision(@target.tokens_per_second, precision: 1) %> tok/s
+                </span>
+                <span class="text-sm text-contentTertiary ml-2">
+                  (<%= @target.tokens_per_second_sample_count %> sample<%= 's' if @target.tokens_per_second_sample_count != 1 %>)
+                </span>
+              <% else %>
+                <span class="text-contentTertiary">Not measured yet</span>
+              <% end %>
+            </td>
+          </tr>
+        <% end %>
+        </tr>
+        <% if scheduled_scans_display.present? %>
+          <tr>
+            <th class="py-3 pr-4 text-left text-sm font-medium text-contentSecondary w-1/4">Scheduled Scans</th>
+            <td class="py-3 text-sm text-contentPrimary"><%= scheduled_scans_display %></td>
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
+  </div>
+
+<div class="grid grid-cols-1 gap-4 mb-4" data-controller="target" data-id="<%= @target.id %>">
+  <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+    <div class="bg-zinc-900 rounded-lg p-3 lg:p-4">
+      <div class="flex items-center gap-2 mb-3">
+        <h3 class="text-white font-sans text-base font-semibold">Report Generation History</h3>
+        <div class="relative flex-shrink-0" data-controller="tooltip">
+          <button type="button" class="flex-shrink-0" aria-label="Information about Report Generation History" data-action="mouseenter->tooltip#show mouseleave->tooltip#hide">
+            <span class="icon icon-sm icon-info text-white"></span>
+          </button>
+          <div class="hidden absolute left-0 top-full mt-2 w-64 bg-[#27272A] rounded-xl shadow-lg z-50 p-3" data-tooltip-target="popup" data-action="click->tooltip#stopPropagation">
+            <p class="text-zinc-400 font-sans text-xs leading-relaxed"><%= t('charts.tooltips.reports_growth') %></p>
+          </div>
+        </div>
+      </div>
+      <div class="w-full h-64 sm:h-72" data-target-target="reportsGrowth" aria-label="Report Generation History chart">
+        <%= render partial: "charts/shared/loading_notice" %>
+      </div>
+    </div>
+
+    <div class="bg-zinc-900 rounded-lg p-3 lg:p-4">
+      <div class="flex items-center gap-2 mb-3">
+        <h3 class="text-white font-sans text-base font-semibold">Attack Success Rate (Last 30 Days)</h3>
+        <div class="relative flex-shrink-0" data-controller="tooltip">
+          <button type="button" class="flex-shrink-0" aria-label="Information about Attack Success Rate" data-action="mouseenter->tooltip#show mouseleave->tooltip#hide">
+            <span class="icon icon-sm icon-info text-white"></span>
+          </button>
+          <div class="hidden absolute left-0 top-full mt-2 w-64 bg-[#27272A] rounded-xl shadow-lg z-50 p-3" data-tooltip-target="popup" data-action="click->tooltip#stopPropagation">
+            <p class="text-zinc-400 font-sans text-xs leading-relaxed"><%= t('charts.tooltips.asr_gauge') %></p>
+          </div>
+        </div>
+      </div>
+      <div class="w-full h-64 sm:h-72" data-target-target="successRateGauge" aria-label="Attack Success Rate gauge chart">
+        <%= render partial: "charts/shared/loading_notice" %>
+      </div>
+    </div>
+  </div>
+
+  <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+    <div class="bg-zinc-900 rounded-lg p-3 lg:p-4">
+      <div class="flex items-center gap-2 mb-3">
+        <h3 class="text-white font-sans text-base font-semibold">Attack Success Rate History</h3>
+        <div class="relative flex-shrink-0" data-controller="tooltip">
+          <button type="button" class="flex-shrink-0" aria-label="Information about Attack Success Rate History" data-action="mouseenter->tooltip#show mouseleave->tooltip#hide">
+            <span class="icon icon-sm icon-info text-white"></span>
+          </button>
+          <div class="hidden absolute left-0 top-full mt-2 w-64 bg-[#27272A] rounded-xl shadow-lg z-50 p-3" data-tooltip-target="popup" data-action="click->tooltip#stopPropagation">
+            <p class="text-zinc-400 font-sans text-xs leading-relaxed"><%= t('charts.tooltips.asr_history') %></p>
+          </div>
+        </div>
+      </div>
+      <div class="w-full h-64 sm:h-72" data-target-target="probesOverTime" aria-label="Attack Success Rate History chart">
+        <%= render partial: "charts/shared/loading_notice" %>
+      </div>
+    </div>
+
+    <div class="bg-zinc-900 rounded-lg p-3 lg:p-4">
+      <div class="flex items-center gap-2 mb-3">
+        <h3 class="text-white font-sans text-base font-semibold">Top Active Detectors</h3>
+        <div class="relative flex-shrink-0" data-controller="tooltip">
+          <button type="button" class="flex-shrink-0" aria-label="Information about Top Active Detectors" data-action="mouseenter->tooltip#show mouseleave->tooltip#hide">
+            <span class="icon icon-sm icon-info text-white"></span>
+          </button>
+          <div class="hidden absolute left-0 top-full mt-2 w-64 bg-[#27272A] rounded-xl shadow-lg z-50 p-3" data-tooltip-target="popup" data-action="click->tooltip#stopPropagation">
+            <p class="text-zinc-400 font-sans text-xs leading-relaxed"><%= t('charts.tooltips.detector_activity') %></p>
+          </div>
+        </div>
+      </div>
+      <div class="w-full h-64 sm:h-72" data-target-target="detectorActivity" aria-label="Top Active Detectors chart">
+        <%= render partial: "charts/shared/loading_notice" %>
+      </div>
+    </div>
+  </div>
+</div>
+</div>

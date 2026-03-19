@@ -1,0 +1,11 @@
+<%# Status indicator cell - colored dot %>
+<% status = column[:status].is_a?(Proc) ? column[:status].call(item) : (value || :pending) %>
+<% tooltip = column[:tooltip].is_a?(Proc) ? column[:tooltip].call(item) : column[:tooltip] %>
+
+<div class="flex justify-center">
+  <%= table_status_indicator(status, extra_classes: tooltip ? "cursor-help" : "") %>
+</div>
+
+<% if tooltip.present? %>
+  <span class="sr-only"><%= tooltip %></span>
+<% end %>

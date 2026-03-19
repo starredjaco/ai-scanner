@@ -1,0 +1,30 @@
+{
+  "restGeneratorConfig": {
+    "rest": {
+      "RestGenerator": {
+        "name": "test service",
+        "uri": "http://mock-llm:9292/api/v1/mock_llm/chat",
+        "method": "post",
+        "req_template_json_object": {
+          "text": "$INPUT"
+        },
+        "response_json": true,
+        "response_json_field": "text"
+      }
+    }
+  },
+  "minimalRestConfig": {
+    "rest": {
+      "RestGenerator": {
+        "name": "minimal test",
+        "uri": "http://mock-llm:9292/api/v1/mock_llm/chat",
+        "method": "post",
+        "req_template_json_object": {
+          "text": "$INPUT"
+        },
+        "response_json": true,
+        "response_json_field": "text"
+      }
+    }
+  }
+}

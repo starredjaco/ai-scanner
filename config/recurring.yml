@@ -1,0 +1,52 @@
+common_jobs: &common_jobs
+  scheduled_scan_job:
+    class: ScheduledScanJob
+    queue: default
+    schedule: every minute
+  # Multi-pod safe heartbeat-based health check
+  check_stale_reports_job:
+    class: CheckStaleReportsJob
+    queue: default
+    schedule: every minute
+  # Multi-pod safe atomic claim scan starting
+  start_pending_scans_job:
+    class: StartPendingScansJob
+    queue: default
+    schedule: every minute
+  # Retries scans interrupted by pod teardown/crashes
+  retry_interrupted_reports_job:
+    class: RetryInterruptedReportsJob
+    queue: default
+    schedule: every 30 seconds
+  # Recovers orphaned raw_report_data (Data-First commit pattern recovery)
+  orphan_raw_report_data_job:
+    class: OrphanRawReportDataJob
+    queue: default
+    schedule: every 5 minutes
+  log_cleanup_job:
+    class: LogCleanupJob
+    queue: low_priority
+    schedule: every day at 3:00am
+  # Retention cleanup (default: 90 days, configurable via RETENTION_DAYS)
+  retention_cleanup_job:
+    class: RetentionCleanupJob
+    queue: low_priority
+    schedule: every day at 4:00am
+  cleanup_old_pdfs_job:
+    class: CleanupOldPdfsJob
+    queue: low_priority
+    schedule: every day at 2:00am
+  download_latest_probe_pack_job:
+    class: DownloadLatestProbePackJob
+    queue: low_priority
+    schedule: every 24 hours
+  portal_export_job:
+    class: PortalExportJob
+    queue: low_priority
+    schedule: every day at 5:00am
+
+production:
+  <<: *common_jobs
+
+development:
+  <<: *common_jobs

@@ -1,0 +1,2 @@
+web: env RUBY_DEBUG_OPEN=true RUBY_YJIT_ENABLE=1 bin/rails server -p $PORT -b '0.0.0.0'
+css: yarn build:css --watch

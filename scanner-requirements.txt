@@ -1,0 +1,10 @@
+# Scanner-specific Python dependencies
+# These are custom dependencies for scanner scripts (not garak dependencies)
+#
+# db_notifier.py - PostgreSQL database notifications for multi-pod IPC
+# Using source build (not -binary) per psycopg2 production recommendations:
+# https://www.psycopg.org/docs/install.html#psycopg-vs-psycopg-binary
+psycopg2==2.9.11
+
+# JEF (Jailbreak Evaluation Framework) - scoring for probe detectors
+0din-jef>=0.3.0

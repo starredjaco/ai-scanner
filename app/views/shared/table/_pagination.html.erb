@@ -1,0 +1,141 @@
+<%#
+  Styled Pagination Component (Pagy version)
+
+  Usage:
+    render "shared/table/pagination", pagy: @pagy
+
+  Features:
+    - Shows "Showing X to Y of Z results"
+    - Page numbers centered with prev/next at container edges
+    - Previous/Next navigation
+    - Ellipsis for long page ranges
+    - Mobile-responsive (simplified on small screens)
+    - Dark theme styling
+%>
+
+<% if pagy.present? && pagy.pages > 1 %>
+  <%
+    current_page = pagy.page
+    total_pages = pagy.pages
+    per_page = pagy.limit
+    total_count = pagy.count
+
+    # Pagy 43 provides from/to directly
+    showing_from = pagy.from
+    showing_to = pagy.to
+
+    # Calculate which pages to show (window of 2 around current)
+    window = 2
+    pages_to_show = []
+
+    # Always include first page
+    pages_to_show << 1
+
+    # Calculate range around current page
+    range_start = [current_page - window, 2].max
+    range_end = [current_page + window, total_pages - 1].min
+
+    # Add ellipsis marker if gap after first page
+    pages_to_show << :gap_start if range_start > 2
+
+    # Add pages in the window
+    (range_start..range_end).each { |p| pages_to_show << p }
+
+    # Add ellipsis marker if gap before last page
+    pages_to_show << :gap_end if range_end < total_pages - 1
+
+    # Always include last page (if more than 1 page)
+    pages_to_show << total_pages if total_pages > 1
+  %>
+
+  <div class="pagination-container px-4 py-4 border-t border-borderPrimary bg-backgroundPrimary">
+    <%# Desktop layout: prev at left edge, pages centered, next at right edge %>
+    <nav class="hidden sm:flex items-center justify-between" aria-label="Pagination">
+      <%# Previous button - left edge %>
+      <div class="flex-shrink-0">
+        <% if !pagy.previous %>
+          <span class="inline-flex items-center gap-2 px-3 py-2 text-sm font-medium text-zinc-600 cursor-not-allowed">
+            <span class="icon icon-sm icon-arrow-left"></span>
+            <span>Previous</span>
+          </span>
+        <% else %>
+          <%= link_to url_for(request.query_parameters.merge(page: pagy.previous)),
+              class: "inline-flex items-center gap-2 px-3 py-2 text-sm font-medium text-textMuted hover:text-white transition-colors",
+              "aria-label": "Previous page" do %>
+            <span class="icon icon-sm icon-arrow-left"></span>
+            <span>Previous</span>
+          <% end %>
+        <% end %>
+      </div>
+
+      <%# Page numbers - centered %>
+      <div class="flex items-center gap-1">
+        <% pages_to_show.each do |page| %>
+          <% if page == :gap_start || page == :gap_end %>
+            <span class="inline-flex items-center justify-center w-9 h-9 text-sm text-textMuted">
+              &hellip;
+            </span>
+          <% elsif page == current_page %>
+            <span class="inline-flex items-center justify-center w-9 h-9 text-sm font-medium text-white bg-primary rounded-lg" aria-current="page">
+              <%= page %>
+            </span>
+          <% else %>
+            <%= link_to page, url_for(request.query_parameters.merge(page: page)),
+                class: "inline-flex items-center justify-center w-9 h-9 text-sm font-medium text-textMuted hover:text-white hover:bg-zinc-800 rounded-lg transition-colors" %>
+          <% end %>
+        <% end %>
+      </div>
+
+      <%# Next button - right edge %>
+      <div class="flex-shrink-0">
+        <% if !pagy.next %>
+          <span class="inline-flex items-center gap-2 px-3 py-2 text-sm font-medium text-zinc-600 cursor-not-allowed">
+            <span>Next</span>
+            <span class="icon icon-sm icon-arrow-right"></span>
+          </span>
+        <% else %>
+          <%= link_to url_for(request.query_parameters.merge(page: pagy.next)),
+              class: "inline-flex items-center gap-2 px-3 py-2 text-sm font-medium text-textMuted hover:text-white transition-colors",
+              "aria-label": "Next page" do %>
+            <span>Next</span>
+            <span class="icon icon-sm icon-arrow-right"></span>
+          <% end %>
+        <% end %>
+      </div>
+    </nav>
+
+    <%# Mobile layout: simplified with prev/next and page indicator %>
+    <nav class="sm:hidden flex items-center justify-between" aria-label="Pagination">
+      <%# Previous button %>
+      <% if !pagy.previous %>
+        <span class="inline-flex items-center justify-center w-9 h-9 text-sm font-medium text-zinc-600 cursor-not-allowed">
+          <span class="icon icon-sm icon-arrow-left"></span>
+        </span>
+      <% else %>
+        <%= link_to url_for(request.query_parameters.merge(page: pagy.previous)),
+            class: "inline-flex items-center justify-center w-9 h-9 text-sm font-medium text-textMuted hover:text-white transition-colors",
+            "aria-label": "Previous page" do %>
+          <span class="icon icon-sm icon-arrow-left"></span>
+        <% end %>
+      <% end %>
+
+      <%# Page indicator %>
+      <span class="text-sm font-medium text-textMuted">
+        Page <span class="text-white"><%= current_page %></span> of <%= total_pages %>
+      </span>
+
+      <%# Next button %>
+      <% if !pagy.next %>
+        <span class="inline-flex items-center justify-center w-9 h-9 text-sm font-medium text-zinc-600 cursor-not-allowed">
+          <span class="icon icon-sm icon-arrow-right"></span>
+        </span>
+      <% else %>
+        <%= link_to url_for(request.query_parameters.merge(page: pagy.next)),
+            class: "inline-flex items-center justify-center w-9 h-9 text-sm font-medium text-textMuted hover:text-white transition-colors",
+            "aria-label": "Next page" do %>
+          <span class="icon icon-sm icon-arrow-right"></span>
+        <% end %>
+      <% end %>
+    </nav>
+  </div>
+<% end %>

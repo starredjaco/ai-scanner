@@ -1,0 +1,18 @@
+<%# Empty state when no items in collection %>
+
+<% message ||= "No items found" %>
+<% action ||= nil %>
+
+<div class="text-center py-12 px-4">
+  <span class="icon icon-lg icon-inbox mx-auto text-gray-400 dark:text-gray-600 block" style="width: 3rem; height: 3rem;"></span>
+  <h3 class="mt-4 text-sm font-medium text-gray-900 dark:text-gray-100"><%= message %></h3>
+
+  <% if action.present? %>
+    <div class="mt-6">
+      <%= link_to action[:path], class: "btn-base btn-base-size btn-default-primary" do %>
+        <span class="icon icon-md icon-plus"></span>
+        <%= action[:label] %>
+      <% end %>
+    </div>
+  <% end %>
+</div>

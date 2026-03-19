@@ -1,0 +1,45 @@
+<%#
+  Select Filter Field
+
+  Uses Ransack _eq predicate.
+
+  filter: {
+    key: :status,
+    label: "Status",
+    collection: [["Active", "active"], ["Inactive", "inactive"]],  # Array of [label, value]
+    include_blank: "Any"  # Optional, defaults to "Any"
+  }
+%>
+
+<% filter ||= {} %>
+<% ransack ||= nil %>
+
+<% field_key = filter[:key] %>
+<% param_name = "q[#{field_key}_eq]" %>
+<% current_value = ransack&.send("#{field_key}_eq") %>
+<% collection = filter[:collection] || [] %>
+<% include_blank = filter.fetch(:include_blank, "Any") %>
+
+<div class="space-y-1">
+  <label for="<%= param_name %>" class="block text-xs font-medium text-textMuted uppercase tracking-wider">
+    <%= filter[:label] || field_key.to_s.humanize %>
+  </label>
+  <div class="relative">
+    <select
+      name="<%= param_name %>"
+      id="<%= param_name %>"
+      class="input-select"
+    >
+      <% if include_blank %>
+        <option value=""><%= include_blank.is_a?(String) ? include_blank : "Any" %></option>
+      <% end %>
+      <% collection.each do |item| %>
+        <% label, value = item.is_a?(Array) ? item : [item, item] %>
+        <option value="<%= value %>" <%= 'selected' if current_value.to_s == value.to_s %>><%= label %></option>
+      <% end %>
+    </select>
+    <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-textMuted">
+      <span class="icon icon-sm icon-chevron-down"></span>
+    </div>
+  </div>
+</div>

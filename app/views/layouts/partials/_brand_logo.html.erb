@@ -1,0 +1,4 @@
+<% if BrandConfig.logo_path %>
+  <%= image_tag BrandConfig.logo_path, class: local_assigns.fetch(:logo_class, 'h-[23px]'), alt: "#{BrandConfig.brand_name} logo" %>
+<% end %>
+<span class="text-primary text-2xl font-sans font-normal tracking-tight leading-[23px]">SCANNER</span>

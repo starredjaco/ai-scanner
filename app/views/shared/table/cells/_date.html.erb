@@ -1,0 +1,6 @@
+<%# Date cell - formatted date display %>
+<% format = column[:format] || :short %>
+
+<span class="text-sm text-gray-500 dark:text-gray-400 whitespace-nowrap">
+  <%= table_format_date(value, format: format) || "—" %>
+</span>

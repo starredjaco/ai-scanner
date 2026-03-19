@@ -1,0 +1,62 @@
+<%= render partial: "admin/shared/table_header", locals: { title: "Companies", icon_path: "menu/companies.svg", current_page: :index, action_buttons: policy(Company).create? ? [{ label: "New Company", path: new_company_path, variant: :default, color: :gray, size: :base, icon: "icon-plus" }] : [] } %>
+<div class="rounded-lg bg-backgroundPrimary border border-borderPrimary overflow-hidden">
+
+<%= render "shared/filter/filter_panel",
+    ransack: @q,
+    filters: [
+      { key: :name, label: "Name", type: :text, placeholder: "Search by name..." },
+      { key: :tier, label: "Tier", type: :select, collection: @filter_tiers },
+      { key: :created_at, label: "Created Date", type: :date_range }
+    ],
+    form_url: companies_path %>
+
+<%= render "shared/table/table",
+    collection: @companies,
+    ransack: @q,
+    pagy: @pagy,
+    empty_message: "No companies found",
+    columns: [
+      {
+        key: :id,
+        label: "ID",
+        type: :text,
+        sortable: true
+      },
+      {
+        key: :name,
+        label: "Name",
+        type: :link,
+        link_path: ->(company) { company_path(company) },
+        link_class: "text-sm text-primary hover:text-primary/80 no-underline transition-colors",
+        sortable: true
+      },
+      {
+        key: :tier,
+        label: "Tier",
+        type: :custom,
+        sortable: true,
+        render: ->(company) { tier_badge(company) }
+      },
+      {
+        key: :users_count,
+        label: "Users",
+        type: :custom,
+        sortable: false,
+        render: ->(company) { company.users.size }
+      },
+      {
+        key: :weekly_scan_count,
+        label: "Scans This Week",
+        type: :custom,
+        sortable: true,
+        render: ->(company) { weekly_scan_display(company) }
+      },
+      {
+        key: :created_at,
+        label: "Created",
+        type: :datetime,
+        sortable: true
+      }
+    ]
+%>
+</div>

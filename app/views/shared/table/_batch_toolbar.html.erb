@@ -1,0 +1,69 @@
+<%# Batch actions toolbar - shown when items are selected %>
+
+<div class="bg-primary/10 px-4 py-3 border-b border-primary/30 hidden"
+     data-batch-select-target="toolbar">
+  <div class="flex items-center justify-between">
+    <div class="flex items-center gap-4">
+      <span class="text-sm text-primary">
+        <span data-batch-select-target="count">0</span> selected
+      </span>
+
+      <div class="flex gap-2">
+        <% batch_actions.each do |action| %>
+          <% case action.to_sym %>
+          <% when :delete, :destroy %>
+            <%= button_tag type: "submit",
+                name: "batch_action",
+                value: "destroy",
+                class: "btn-base btn-sm btn-outline-red",
+                data: { turbo_confirm: "Are you sure you want to delete the selected items?" } do %>
+              <span class="icon icon-sm icon-trash"></span>
+              Delete
+            <% end %>
+          <% when :rerun %>
+            <%= button_tag type: "submit",
+                name: "batch_action",
+                value: "rerun",
+                class: "btn-base btn-sm btn-outline-gray",
+                data: { turbo_confirm: "Are you sure you want to rerun the selected items?" } do %>
+              <span class="icon icon-sm icon-replay"></span>
+              Rerun
+            <% end %>
+          <% when :stop %>
+            <%= button_tag type: "submit",
+                name: "batch_action",
+                value: "stop",
+                class: "btn-base btn-sm btn-outline-primary",
+                data: { turbo_confirm: "Are you sure you want to stop the selected items?" } do %>
+              <span class="icon icon-sm icon-stop"></span>
+              Stop
+            <% end %>
+          <% when :export %>
+            <%= button_tag type: "submit",
+                name: "batch_action",
+                value: "export",
+                class: "btn-base btn-sm btn-outline-gray" do %>
+              <span class="icon icon-sm icon-download"></span>
+              Export
+            <% end %>
+          <% when :validate %>
+            <%= button_tag type: "submit",
+                name: "batch_action",
+                value: "validate",
+                class: "btn-base btn-sm btn-outline-primary",
+                data: { turbo_confirm: "Are you sure you want to validate the selected targets?" } do %>
+              <span class="icon icon-sm icon-check"></span>
+              Validate
+            <% end %>
+          <% end %>
+        <% end %>
+      </div>
+    </div>
+
+    <%= button_tag type: "button",
+        class: "btn-base btn-sm btn-plain-primary",
+        data: { action: "click->batch-select#clearAll" } do %>
+      Clear selection
+    <% end %>
+  </div>
+</div>

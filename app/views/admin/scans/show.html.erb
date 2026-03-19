@@ -1,0 +1,263 @@
+<%
+  action_buttons = [
+    { label: "Reports", path: reports_path(scan_id: @scan.id), variant: :default, color: :gray, size: :base, icon: "icon-document" },
+    { label: "Edit Scan", path: edit_scan_path(@scan), variant: :default, color: :gray, size: :base, icon: "icon-edit" },
+    { label: "Delete Scan", path: scan_path(@scan), method: :delete, data: { turbo_confirm: "Are you sure you want to delete this scan?" }, variant: :default, color: :gray, size: :base, icon: "icon-trash" },
+  ]
+  unless @quota_exhausted
+    action_buttons << { label: "Rerun Scan", path: rerun_scan_path(@scan), method: :post, variant: :default, color: :primary, size: :base, icon: "icon-play" }
+  end
+%>
+<%= render partial: "admin/shared/show_header", locals: { title: "Scan: #{@scan.name}", action_buttons: action_buttons } %>
+
+<script src="/js/echarts.js" defer></script>
+
+<%
+  # Build targets display
+  targets_display = if @scan.targets.any?
+    safe_join(@scan.targets.map { |target|
+      content_tag(:div, class: "flex items-center gap-2 py-1") do
+        target_status_indicator(target) +
+        link_to(target.name, target_path(target), class: "text-sm text-primary hover:text-primary-400 hover:underline transition-colors")
+      end
+    })
+  else
+    nil
+  end
+
+  # Build probes display
+  probes_display = if @scan.probes.any?
+    detector_groups = @scan.probes.includes(:detector).group_by(&:detector)
+    safe_join(detector_groups.map { |detector, probes|
+      short_name = detector.name.split(".").last
+      translated_name = I18n.t("detectors.names.#{short_name}", default: short_name)
+      content_tag(:div, class: "flex items-center justify-between py-2 px-3 bg-backgroundSecondary border border-borderPrimary rounded-lg mb-2") do
+        content_tag(:span, translated_name, class: "text-sm font-medium text-contentPrimary") +
+        content_tag(:span, "#{probes.count} probe#{probes.count == 1 ? '' : 's'}", class: "inline-flex items-center px-2 py-1 rounded-md text-xs font-medium bg-backgroundPrimary border border-borderPrimary text-contentSecondary")
+      end
+    })
+  else
+    nil
+  end
+
+  # Build schedule display
+  schedule_display = if @scan.recurrence.present?
+    content_tag(:div, class: "flex items-center gap-2") do
+      safe_join([
+        content_tag(:span, "", class: "icon icon-md icon-clock text-white"),
+        content_tag(:span, scan_format_recurrence_schedule(@scan.recurrence))
+      ])
+    end
+  else
+    nil
+  end
+
+  # Build auto-update categories display
+  auto_update_display = if @scan.auto_updating_categories.any?
+    safe_join(@scan.auto_updating_categories.map { |category|
+      content_tag(:span, class: "inline-flex items-center gap-1 px-2.5 py-0.5 rounded-md text-xs font-medium bg-lime-950 text-lime-400 dark:bg-lime-950 dark:text-lime-400 mr-2") do
+        content_tag(:span, "", class: "icon icon-xs icon-refresh") +
+        content_tag(:span, category)
+      end
+    })
+  else
+    nil
+  end
+%>
+
+<div class="py-6">
+  <div class="rounded-lg bg-backgroundPrimary border border-borderPrimary p-6 mb-6">
+    <h3 class="text-xl font-sans font-semibold text-primary tracking-wide mb-6">METADATA</h3>
+    <table class="w-full">
+      <tbody class="divide-y divide-borderPrimary">
+        <tr>
+          <th class="py-3 pr-4 text-left text-sm font-medium text-contentSecondary w-1/4">Scan UUID</th>
+          <td class="py-3 text-sm text-contentPrimary"><%= @scan.uuid %></td>
+        </tr>
+        <tr>
+          <th class="py-3 pr-4 text-left text-sm font-medium text-contentSecondary w-1/4">Name</th>
+          <td class="py-3 text-sm text-contentPrimary"><%= @scan.name %></td>
+        </tr>
+        <% if @scan.derived_status %>
+          <tr>
+            <th class="py-3 pr-4 text-left text-sm font-medium text-contentSecondary w-1/4">Status</th>
+            <td class="py-3 text-sm text-contentPrimary"><%= status_tag(@scan.derived_status) %></td>
+          </tr>
+        <% end %>
+        <tr>
+          <th class="py-3 pr-4 text-left text-sm font-medium text-contentSecondary w-1/4">Targets</th>
+          <td class="py-3 text-sm text-contentPrimary">
+            <% if targets_display %>
+              <div class="grid grid-cols-2 gap-x-6 gap-y-1"><%= targets_display %></div>
+            <% else %>
+              <span class="text-contentTertiary">—</span>
+            <% end %>
+          </td>
+        </tr>
+        <tr>
+          <th class="py-3 pr-4 text-left text-sm font-medium text-contentSecondary w-1/4">Output Server</th>
+          <td class="py-3 text-sm text-contentPrimary"><%= @scan.output_server&.name || content_tag(:span, "—", class: "text-contentTertiary") %></td>
+        </tr>
+        <tr>
+          <th class="py-3 pr-4 text-left text-sm font-medium text-contentSecondary w-1/4">Probes</th>
+          <td class="py-3 text-sm text-contentPrimary">
+            <% if probes_display %>
+              <div class="space-y-2"><%= probes_display %></div>
+            <% else %>
+              <span class="text-contentTertiary">—</span>
+            <% end %>
+          </td>
+        </tr>
+        <tr>
+          <th class="py-3 pr-4 text-left text-sm font-medium text-contentSecondary w-1/4">Schedule</th>
+          <td class="py-3 text-sm text-contentPrimary"><%= schedule_display || content_tag(:span, "—", class: "text-contentTertiary") %></td>
+        </tr>
+        <tr>
+          <th class="py-3 pr-4 text-left text-sm font-medium text-contentSecondary w-1/4">Auto-Update Categories</th>
+          <td class="py-3 text-sm text-contentPrimary"><%= auto_update_display || content_tag(:span, "—", class: "text-contentTertiary") %></td>
+        </tr>
+        <tr>
+          <th class="py-3 pr-4 text-left text-sm font-medium text-contentSecondary w-1/4">Created On</th>
+          <td class="py-3 text-sm text-contentPrimary"><%= format_created_date(@scan.created_at) %></td>
+        </tr>
+        <tr>
+          <th class="py-3 pr-4 text-left text-sm font-medium text-contentSecondary w-1/4">Updated At</th>
+          <td class="py-3 text-sm text-contentPrimary"><%= @scan.updated_at.strftime("%B %d, %Y %H:%M") %></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="rounded-lg bg-backgroundPrimary border border-borderPrimary p-6 mb-6">
+    <h3 class="text-xl font-sans font-semibold text-primary tracking-wide mb-6">Token Usage Estimate</h3>
+    <table class="w-full">
+      <tbody class="divide-y divide-borderPrimary">
+        <tr>
+          <th class="py-3 pr-4 text-left text-sm font-medium text-contentSecondary w-1/4">Projected Per Scan</th>
+          <td class="py-3 text-sm text-contentPrimary">
+            <span class="text-xl font-bold text-primary">~<%= number_with_delimiter(@scan.projected_input_tokens) %></span>
+            <span class="text-contentTertiary ml-1">tokens (input only)</span>
+          </td>
+        </tr>
+        <% if (estimate = @scan.estimated_run_time) %>
+          <tr>
+            <th class="py-3 pr-4 text-left text-sm font-medium text-contentSecondary w-1/4">Estimated Run Time</th>
+            <td class="py-3 text-sm text-contentPrimary">
+              <span class="text-xl font-bold text-green-600 dark:text-green-400">~<%= estimate[:formatted] %></span>
+              <% if estimate[:unmeasured_targets] > 0 %>
+                <span class="text-amber-500 dark:text-amber-400 text-sm ml-2">
+                  (excludes <%= estimate[:unmeasured_targets] %> unmeasured target<%= 's' if estimate[:unmeasured_targets] > 1 %>)
+                </span>
+              <% end %>
+            </td>
+          </tr>
+        <% end %>
+        <% if (monthly = @scan.monthly_token_projection) %>
+          <tr>
+            <th class="py-3 pr-4 text-left text-sm font-medium text-contentSecondary w-1/4">Projected Per Month</th>
+            <td class="py-3 text-sm text-contentPrimary">
+              <span class="text-xl font-bold text-primary">~<%= number_with_delimiter(monthly[:tokens]) %></span>
+              <span class="text-contentTertiary ml-1">tokens (<%= monthly[:runs] %> scheduled runs)</span>
+            </td>
+          </tr>
+        <% end %>
+        <% if (actual = @scan.actual_token_averages) %>
+          <tr>
+            <th class="py-3 pr-4 text-left text-sm font-medium text-contentSecondary w-1/4">Actual Avg Input</th>
+            <td class="py-3 text-sm text-contentPrimary">
+              <span class="text-xl font-bold text-lime-500"><%= number_with_delimiter(actual[:input]) %></span>
+              <span class="text-contentTertiary ml-1">tokens</span>
+            </td>
+          </tr>
+          <tr>
+            <th class="py-3 pr-4 text-left text-sm font-medium text-contentSecondary w-1/4">Actual Avg Output</th>
+            <td class="py-3 text-sm text-contentPrimary">
+              <span class="text-xl font-bold text-lime-500"><%= number_with_delimiter(actual[:output]) %></span>
+              <span class="text-contentTertiary ml-1">tokens (from <%= actual[:count] %> completed <%= actual[:count] == 1 ? 'report' : 'reports' %>)</span>
+            </td>
+          </tr>
+        <% else %>
+          <tr>
+            <th class="py-3 pr-4 text-left text-sm font-medium text-contentSecondary w-1/4">Actual Usage</th>
+            <td class="py-3 text-sm text-contentTertiary">No completed reports yet</td>
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
+    <div class="mt-4 pt-4 border-t border-borderPrimary">
+      <p class="text-sm text-contentTertiary">Projections estimate INPUT tokens only. Output tokens depend on model responses. Estimates use cl100k_base tokenization (~10% variance by provider).</p>
+    </div>
+  </div>
+
+  <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6" data-controller="scan" data-id="<%= @scan.id %>">
+    <div class="rounded-lg bg-backgroundPrimary border border-borderPrimary p-6">
+      <div class="flex items-center gap-2 mb-4">
+        <h3 class="text-base font-sans font-semibold text-white tracking-wide">Reports Growth Over Time</h3>
+        <div class="relative flex-shrink-0" data-controller="tooltip">
+          <button type="button" class="flex-shrink-0" aria-label="Information about Reports Growth Over Time" data-action="mouseenter->tooltip#show mouseleave->tooltip#hide">
+            <span class="icon icon-sm icon-info text-white"></span>
+          </button>
+          <div class="hidden absolute left-0 top-full mt-2 w-64 bg-[#27272A] rounded-xl shadow-lg z-50 p-3" data-tooltip-target="popup" data-action="click->tooltip#stopPropagation">
+            <p class="text-zinc-400 font-sans text-xs leading-relaxed"><%= t('charts.tooltips.reports_growth') %></p>
+          </div>
+        </div>
+      </div>
+      <div class="w-full h-[300px]" data-scan-target="reportsTimeline">
+        <%= render partial: "charts/shared/loading_notice" %>
+      </div>
+    </div>
+
+    <div class="rounded-lg bg-backgroundPrimary border border-borderPrimary p-6">
+      <div class="flex items-center gap-2 mb-4">
+        <h3 class="text-base font-sans font-semibold text-white tracking-wide">Average Attack Success Rate (Last 30 Days)</h3>
+        <div class="relative flex-shrink-0" data-controller="tooltip">
+          <button type="button" class="flex-shrink-0" aria-label="Information about Average Attack Success Rate" data-action="mouseenter->tooltip#show mouseleave->tooltip#hide">
+            <span class="icon icon-sm icon-info text-white"></span>
+          </button>
+          <div class="hidden absolute left-0 top-full mt-2 w-64 bg-[#27272A] rounded-xl shadow-lg z-50 p-3" data-tooltip-target="popup" data-action="click->tooltip#stopPropagation">
+            <p class="text-zinc-400 font-sans text-xs leading-relaxed"><%= t('charts.tooltips.asr_gauge') %></p>
+          </div>
+        </div>
+      </div>
+      <div class="w-full h-[300px]" data-scan-target="successRateGauge">
+        <%= render partial: "charts/shared/loading_notice" %>
+      </div>
+    </div>
+  </div>
+
+  <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6" data-controller="scan" data-id="<%= @scan.id %>">
+    <div class="rounded-lg bg-backgroundPrimary border border-borderPrimary p-6">
+      <div class="flex items-center gap-2 mb-4">
+        <h3 class="text-base font-sans font-semibold text-white tracking-wide">Successful Attacks by Target Over Time</h3>
+        <div class="relative flex-shrink-0" data-controller="tooltip">
+          <button type="button" class="flex-shrink-0" aria-label="Information about Successful Attacks by Target Over Time" data-action="mouseenter->tooltip#show mouseleave->tooltip#hide">
+            <span class="icon icon-sm icon-info text-white"></span>
+          </button>
+          <div class="hidden absolute left-0 top-full mt-2 w-64 bg-[#27272A] rounded-xl shadow-lg z-50 p-3" data-tooltip-target="popup" data-action="click->tooltip#stopPropagation">
+            <p class="text-zinc-400 font-sans text-xs leading-relaxed"><%= t('charts.tooltips.attacks_by_target') %></p>
+          </div>
+        </div>
+      </div>
+      <div class="w-full h-[300px]" data-scan-target="attackFails">
+        <%= render partial: "charts/shared/loading_notice" %>
+      </div>
+    </div>
+
+    <div class="rounded-lg bg-backgroundPrimary border border-borderPrimary p-6">
+      <div class="flex items-center gap-2 mb-4">
+        <h3 class="text-base font-sans font-semibold text-white tracking-wide">Top Active Detectors</h3>
+        <div class="relative flex-shrink-0" data-controller="tooltip">
+          <button type="button" class="flex-shrink-0" aria-label="Information about Top Active Detectors" data-action="mouseenter->tooltip#show mouseleave->tooltip#hide">
+            <span class="icon icon-sm icon-info text-white"></span>
+          </button>
+          <div class="hidden absolute left-0 top-full mt-2 w-64 bg-[#27272A] rounded-xl shadow-lg z-50 p-3" data-tooltip-target="popup" data-action="click->tooltip#stopPropagation">
+            <p class="text-zinc-400 font-sans text-xs leading-relaxed"><%= t('charts.tooltips.detector_activity') %></p>
+          </div>
+        </div>
+      </div>
+      <div class="w-full h-[300px]" data-scan-target="detectorActivity">
+        <%= render partial: "charts/shared/loading_notice" %>
+      </div>
+    </div>
+  </div>
+</div>

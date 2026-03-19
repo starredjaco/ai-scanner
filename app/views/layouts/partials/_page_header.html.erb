@@ -1,0 +1,4 @@
+<%# Page header with title data attribute for Turbo Frame navigation %>
+<% if local_assigns[:title].present? %>
+  <div data-page-title="<%= title %>" class="sr-only"></div>
+<% end %>

@@ -1,0 +1,70 @@
+<% case type %>
+<% when 'success' %>
+  <!-- Success toast -->
+  <div class="toast toast-success max-w-xs bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-200 shadow-lg rounded-lg overflow-hidden border-l-4 border-green-500 flex items-start transition-all duration-300 transform translate-y-0 opacity-100 animate-fade-out"
+    data-controller="notification" data-action="animationend->notification#remove"
+  >
+    <div class="p-4 flex-1">
+      <div class="flex items-center justify-between">
+        <div class="flex items-center">
+          <div class="bg-lime-950/30 dark:bg-lime-950/30 p-1 rounded-full">
+            <span class="icon icon-md icon-checkmark text-lime-400"></span>
+          </div>
+          <span class="font-medium ml-2"><%= title || 'Success!' %></span>
+        </div>
+        <button class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition ml-6" data-action="click->notification#close">
+          <span class="icon icon-sm icon-x"></span>
+        </button>
+      </div>
+      <p class="mt-1 text-sm"><%= message %></p>
+      <% if link.present? %>
+        <div class="mt-2">
+          <%= link_to link, class: "inline-flex items-center text-sm font-medium text-lime-600 hover:text-lime-700 dark:text-lime-400 dark:hover:text-lime-300 transition-colors duration-200" do %>
+            <%= link_text %>
+          <% end %>
+        </div>
+      <% end %>
+    </div>
+  </div>
+<% when 'error' %>
+  <!-- Error toast -->
+  <div class="toast toast-error max-w-xs bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-200 shadow-lg rounded-lg overflow-hidden border-l-4 border-red-500 flex items-start transition-all duration-300 transform translate-y-0 opacity-100 animate-fade-out"
+    data-controller="notification" data-action="animationend->notification#remove"
+  >
+    <div class="p-4 flex-1">
+      <div class="flex items-center justify-between">
+        <div class="flex items-center">
+          <div class="bg-red-950/30 dark:bg-red-950/30 p-1 rounded-full">
+            <span class="icon icon-md icon-x text-red-400"></span>
+          </div>
+          <span class="font-medium ml-2"><%= title || 'Error' %></span>
+        </div>
+        <button class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition ml-6" data-action="click->notification#close">
+          <span class="icon icon-sm icon-x"></span>
+        </button>
+      </div>
+      <p class="mt-1 text-sm"><%= message %></p>
+    </div>
+  </div>
+<% when 'warning' %>
+  <!-- Notice toast -->
+  <div class="toast toast-notice max-w-xs bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-200 shadow-lg rounded-lg overflow-hidden border-l-4 border-blue-500 flex items-start transition-all duration-300 transform translate-y-0 opacity-100 animate-fade-out"
+    data-controller="notification" data-action="animationend->notification#remove"
+  >
+    <div class="p-4 flex-1">
+      <div class="flex items-center justify-between">
+        <div class="flex items-center">
+          <div class="bg-zinc-800/30 dark:bg-zinc-800/30 p-1 rounded-full">
+            <span class="icon icon-md icon-info text-zinc-400"></span>
+          </div>
+          <span class="font-medium ml-2"><%= title || 'Notice' %></span>
+        </div>
+        <button class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition ml-6" data-action="click->notification#close">
+          <span class="icon icon-sm icon-x"></span>
+        </button>
+      </div>
+      <p class="mt-1 text-sm"><%= message %></p>
+    </div>
+  </div>
+<% end %>
+

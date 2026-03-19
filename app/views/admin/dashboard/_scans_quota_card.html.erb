@@ -1,0 +1,45 @@
+<% company = current_user&.company %>
+<% if company %>
+  <% limit = company.scans_per_week_limit %>
+  <% used = company.weekly_scan_count %>
+
+<div class="bg-white dark:bg-zinc-900 rounded-lg shadow-sm border border-gray-100 dark:border-zinc-700 p-3 lg:p-4 flex flex-col">
+  <div class="flex items-center gap-2 mb-3">
+    <h3 class="text-white font-sans text-base font-normal">
+        Scans This Week
+      </h3>
+      <%= table_badge(tier_display_name(company.tier), color: tier_badge_color(company.tier)) %>
+    </div>
+
+    <div class="flex-grow flex flex-col justify-center">
+    <% if limit.nil? %>
+      <div class="flex items-end gap-2 mb-1">
+        <span class="font-mono text-2xl sm:text-3xl font-bold text-primary">&infin;</span>
+        <span class="font-mono text-sm text-gray-500 dark:text-gray-400 mb-1">Unlimited</span>
+      </div>
+      <p class="text-xs text-gray-500 dark:text-gray-400">
+        <%= used %> scan<%= used == 1 ? '' : 's' %> run this week
+      </p>
+    <% else %>
+      <div class="flex items-end gap-2 mb-1">
+        <span class="font-mono text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white">
+          <%= used %> / <%= limit %>
+        </span>
+      </div>
+
+      <%# Progress bar %>
+      <div class="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2 mb-1">
+        <div class="h-2 rounded-full transition-all duration-300 <%= progress_bar_color_class(scans_quota_status_color(company)) %>"
+             style="width: <%= scans_quota_percentage(company) %>%"></div>
+      </div>
+
+      <p class="text-xs text-gray-500 dark:text-gray-400">
+        <% if company.scans_remaining.zero? %>
+          <span class="text-red-600 dark:text-red-400 font-medium">Limit reached</span> &middot;
+        <% end %>
+        Resets <%= next_quota_reset_day %>
+      </p>
+    <% end %>
+    </div>
+  </div>
+<% end %>

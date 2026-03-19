@@ -1,0 +1,153 @@
+<div class="bg-backgroundPrimary rounded-lg border border-borderPrimary p-6 mb-6">
+  <h3 class="text-lg font-semibold mb-4 text-primary">
+    Probe Selection
+  </h3>
+
+  <div class="probe-selection-section" data-controller="probe-category">
+    <!-- Search bar -->
+    <div class="mb-6">
+      <div class="relative">
+        <input type="text"
+               placeholder="Search probes..."
+               class="standard-input w-full pl-10 pr-4 py-2 bg-backgroundPrimary border border-borderPrimary rounded-lg text-white placeholder-zinc-500 transition-colors"
+               data-probe-category-target="searchInput"
+               data-action="input->probe-category#filterProbes">
+        <span class="absolute left-3 top-2.5 text-contentTertiary pointer-events-none">
+          <span class="icon icon-md icon-search"></span>
+        </span>
+      </div>
+    </div>
+
+    <!-- Selection summary and controls -->
+    <div class="flex justify-between items-center mb-6">
+      <div class="flex items-center gap-4">
+        <span class="text-lg font-semibold text-contentPrimary">Categories</span>
+        <span class="px-3 py-1 bg-zinc-700/50 text-contentTertiary rounded text-sm font-medium border border-borderPrimary"
+              data-probe-category-target="totalCounter">
+          0 of <%= policy_scope(Probe).enabled.count %> selected
+        </span>
+      </div>
+
+      <!-- Token counter and controls -->
+      <div class="flex items-center gap-4">
+        <!-- Projected input tokens counter -->
+        <div class="flex flex-col items-end">
+          <div class="flex items-center gap-2">
+            <span class="text-sm text-contentSecondary">Projected Input Tokens:</span>
+            <span class="text-lg font-bold text-primary"
+                  data-probe-category-target="tokenCounter">0</span>
+          </div>
+          <!-- Monthly projection (shown when schedule is configured) -->
+          <div class="hidden items-center gap-2 text-sm"
+              data-probe-category-target="monthlyTokenContainer">
+            <span class="text-contentSecondary">Monthly:</span>
+            <span class="font-semibold text-primary"
+                  data-probe-category-target="monthlyTokenCounter">0</span>
+          </div>
+          <!-- Estimated run time (shown when targets with measured rate and probes are selected) -->
+          <div class="hidden items-center gap-2 text-sm"
+               data-scan-form-target="timeEstimateContainer">
+            <span class="text-gray-500 dark:text-gray-400">Est. Time:</span>
+            <span class="font-semibold text-green-600 dark:text-green-400"
+                  data-scan-form-target="timeEstimate">--</span>
+            <span class="hidden text-amber-500 dark:text-amber-400"
+                  data-scan-form-target="unmeasuredWarning"></span>
+          </div>
+        </div>
+
+        <!-- Expand/Collapse buttons -->
+        <div class="inline-flex gap-2">
+          <button type="button"
+                  data-action="click->probe-category#expandAll"
+                  class="btn-base btn-sm btn-default-gray"
+                  title="Expand all categories">
+            <span class="icon icon-sm icon-chevron-down"></span>
+            Expand All
+          </button>
+
+          <button type="button"
+                  data-action="click->probe-category#collapseAll"
+                  class="btn-base btn-sm btn-default-gray"
+                  title="Collapse all categories">
+            <span class="icon icon-sm icon-chevron-up"></span>
+            Collapse All
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Category accordions -->
+    <div class="space-y-3">
+      <%# Curated probe categories %>
+      <% probe_categories.each do |category_name, category_data| %>
+        <%= render "probe_category_item", f: f, scan: scan, category_name: category_name, category_data: category_data, show_auto_update: true %>
+      <% end %>
+
+      <%# Community probes section (nested) %>
+      <% if community_categories.present? %>
+        <% community_probe_count = community_categories.values.sum { |c| c[:probes].count } %>
+        <div class="border border-borderPrimary rounded-lg overflow-hidden hover:border-primary/50 transition-all"
+             data-probe-category-target="category"
+             data-community-parent="true">
+          <!-- Community section header -->
+          <div class="flex items-center justify-between p-4 bg-backgroundSecondary cursor-pointer hover:bg-backgroundSecondary/80 transition-all duration-200"
+               data-action="click->probe-category#toggleCategory"
+               data-probe-category-id="community_probes"
+               aria-expanded="false"
+               aria-controls="category_content_community_probes">
+            <div class="flex items-center gap-3">
+              <!-- Category checkbox -->
+              <div data-action="click->probe-category#handleCheckboxClick">
+                <%= check_box_tag "category_community_probes",
+                    "1",
+                    false,
+                    id: "category_community_probes",
+                    data: {
+                      "probe-category-target": "categoryCheckbox",
+                      "category-id": "community_probes",
+                      "is-parent": "true",
+                      action: "change->probe-category#selectCommunityParent"
+                    },
+                    "aria-label": "Select all Community probes" %>
+              </div>
+
+              <!-- Category icon and label -->
+              <span class="icon icon-md icon-globe text-contentSecondary"></span>
+              <label for="category_community_probes" class="text-sm font-medium text-contentPrimary cursor-pointer">
+                Community Probes
+              </label>
+
+              <!-- Selection count badge -->
+              <span class="inline-flex items-center px-2.5 py-0.5 rounded text-xs font-medium bg-zinc-700/50 text-contentTertiary border border-borderPrimary"
+                    data-probe-category-target="selectionCount"
+                    data-category-id="community_probes">
+                0 of <%= community_probe_count %> selected
+              </span>
+            </div>
+
+            <!-- Chevron icon -->
+            <div class="flex items-center">
+              <span class="icon icon-md icon-chevron-down text-contentTertiary transition-transform duration-200"
+                    data-probe-category-target="chevron"
+                    data-category-id="community_probes"></span>
+            </div>
+          </div>
+
+          <!-- Community section content (nested categories) -->
+          <div id="category_content_community_probes"
+               class="max-h-0 overflow-hidden transition-all duration-300"
+               data-probe-category-target="content"
+               data-category-id="community_probes">
+            <div class="p-4 bg-backgroundPrimary border-t border-borderPrimary">
+              <div class="space-y-2 ml-2 pl-4 border-l-2 border-borderPrimary">
+                <% community_categories.each do |category_name, category_data| %>
+                  <%= render "probe_category_item", f: f, scan: scan, category_name: category_name, category_data: category_data, show_auto_update: false, nested: true %>
+                <% end %>
+              </div>
+            </div>
+          </div>
+        </div>
+      <% end %>
+    </div>
+  </div>
+</div>

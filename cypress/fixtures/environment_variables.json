@@ -1,0 +1,30 @@
+{
+  "globalVariable": {
+    "name": "TEST_GLOBAL_API_KEY",
+    "value": "test-api-key-123",
+    "target": null
+  },
+  "targetSpecificVariable": {
+    "name": "TARGET_SPECIFIC_KEY",
+    "value": "test-target-key-123456",
+    "target": "OpenAI GPT-4o"
+  },
+  "testVariables": [
+    {
+      "name": "TEST_API_KEY",
+      "value": "test-key-abc123"
+    },
+    {
+      "name": "TEST_SECRET",
+      "value": "secret-xyz789"
+    },
+    {
+      "name": "TEST_TOKEN",
+      "value": "token-def456"
+    }
+  ],
+  "invalidVariable": {
+    "name": "",
+    "value": ""
+  }
+}

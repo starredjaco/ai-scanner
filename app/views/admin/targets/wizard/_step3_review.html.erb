@@ -1,0 +1,135 @@
+<div class="max-w-2xl mx-auto">
+  <div class="text-center mb-6">
+    <h2 class="text-2xl font-bold text-contentPrimary mb-2">Review Your Configuration</h2>
+    <p class="text-contentSecondary">Verify everything looks correct before creating your target</p>
+  </div>
+
+  <div class="rounded-lg bg-backgroundPrimary border border-borderPrimary p-6 mb-6">
+    <dl class="divide-y divide-borderPrimary">
+      <%# Provider %>
+      <div class="py-3 flex items-center justify-between">
+        <dt class="text-sm text-contentSecondary">Provider</dt>
+        <dd class="flex items-center gap-2">
+          <span class="text-sm font-medium text-contentPrimary" data-target-wizard-target="reviewProvider">-</span>
+          <% unless target.persisted? %>
+            <button type="button" class="text-xs text-primary hover:underline cursor-pointer" data-action="click->target-wizard#goToStep" data-step="1">Edit</button>
+          <% end %>
+        </dd>
+      </div>
+
+      <%# Name %>
+      <div class="py-3 flex items-center justify-between">
+        <dt class="text-sm text-contentSecondary">Name</dt>
+        <dd class="flex items-center gap-2">
+          <span class="text-sm font-medium text-contentPrimary" data-target-wizard-target="reviewName">-</span>
+          <button type="button" class="text-xs text-primary hover:underline cursor-pointer" data-action="click->target-wizard#goToStep" data-step="2">Edit</button>
+        </dd>
+      </div>
+
+      <%# Target Type %>
+      <div class="py-3 flex items-center justify-between">
+        <dt class="text-sm text-contentSecondary">Target Type</dt>
+        <dd class="text-sm font-medium text-contentPrimary" data-target-wizard-target="reviewTargetType">-</dd>
+      </div>
+
+      <%# Model Type (API only) %>
+      <div class="py-3 flex items-center justify-between" data-target-wizard-target="reviewModelTypeRow">
+        <dt class="text-sm text-contentSecondary">Model Type</dt>
+        <dd class="text-sm font-medium text-contentPrimary" data-target-wizard-target="reviewModelType">-</dd>
+      </div>
+
+      <%# Model (API only) %>
+      <div class="py-3 flex items-center justify-between" data-target-wizard-target="reviewModelRow">
+        <dt class="text-sm text-contentSecondary">Model</dt>
+        <dd class="flex items-center gap-2">
+          <span class="text-sm font-medium text-contentPrimary" data-target-wizard-target="reviewModel">-</span>
+          <button type="button" class="text-xs text-primary hover:underline cursor-pointer" data-action="click->target-wizard#goToStep" data-step="2">Edit</button>
+        </dd>
+      </div>
+
+      <%# Chat URL (Webchat only) %>
+      <div class="py-3 flex items-center justify-between hidden" data-target-wizard-target="reviewChatUrlRow">
+        <dt class="text-sm text-contentSecondary">Chat URL</dt>
+        <dd class="flex items-center gap-2">
+          <span class="text-sm font-medium text-contentPrimary truncate max-w-xs" data-target-wizard-target="reviewChatUrl">-</span>
+          <button type="button" class="text-xs text-primary hover:underline cursor-pointer" data-action="click->target-wizard#goToStep" data-step="2">Edit</button>
+        </dd>
+      </div>
+
+      <%# Description %>
+      <div class="py-3 hidden" data-target-wizard-target="reviewDescriptionRow">
+        <div class="flex items-center justify-between mb-1">
+          <dt class="text-sm text-contentSecondary">Description</dt>
+          <button type="button" class="text-xs text-primary hover:underline cursor-pointer" data-action="click->target-wizard#goToStep" data-step="2">Edit</button>
+        </div>
+        <dd class="text-sm text-contentPrimary" data-target-wizard-target="reviewDescription">-</dd>
+      </div>
+    </dl>
+
+    <%# JSON Config / Web Config (collapsible) %>
+    <div class="mt-4 border-t border-borderPrimary pt-4" data-target-wizard-target="reviewConfigSection" data-controller="toggle">
+      <button type="button" class="flex items-center gap-2 text-sm font-medium text-contentSecondary hover:text-contentPrimary transition-colors w-full cursor-pointer"
+              data-action="click->toggle#toggle">
+        <span class="icon icon-sm icon-chevron-down transition-transform duration-200" data-toggle-target="icon"></span>
+        <span data-target-wizard-target="reviewConfigLabel">Configuration</span>
+      </button>
+      <div class="hidden mt-3" data-toggle-target="content">
+        <pre class="bg-backgroundSecondary rounded-lg p-4 text-xs font-mono text-contentPrimary overflow-x-auto max-h-64 overflow-y-auto border border-borderPrimary"
+             data-target-wizard-target="reviewConfig">-</pre>
+      </div>
+    </div>
+  </div>
+
+  <%# What happens next %>
+  <div class="rounded-lg bg-green-500/10 border border-green-500/30 p-4 mb-6">
+    <h4 class="font-bold text-green-400 text-sm mb-2 flex items-center gap-2">
+      <span class="icon icon-md icon-arrow-right-long"></span>
+      What Happens Next?
+    </h4>
+    <p class="text-sm text-contentSecondary mb-2">
+      After saving, your target enters <strong>Validating</strong> status. A background job will test the connection and verify the configuration works.
+    </p>
+    <ul class="text-xs text-contentTertiary space-y-1 ml-4 list-disc">
+      <li>You can add environment variables (API keys) on the target detail page</li>
+      <li>Once validated, you can create a scan to test for vulnerabilities</li>
+    </ul>
+  </div>
+
+  <%# Security & Privacy %>
+  <div class="rounded-lg bg-backgroundPrimary border border-borderPrimary p-4 mb-6">
+    <h4 class="font-bold text-contentPrimary text-sm mb-2 flex items-center gap-2">
+      <span class="icon icon-md icon-shield-check"></span>
+      Security & Privacy
+    </h4>
+    <ul class="text-sm text-contentSecondary space-y-1">
+      <li class="flex items-center gap-2">
+        <span class="icon icon-sm icon-check text-green-500 shrink-0"></span>
+        API keys stored as environment variables, never in config
+      </li>
+      <li class="flex items-center gap-2">
+        <span class="icon icon-sm icon-check text-green-500 shrink-0"></span>
+        All communications encrypted with TLS
+      </li>
+      <li class="flex items-center gap-2">
+        <span class="icon icon-sm icon-check text-green-500 shrink-0"></span>
+        Scan results stored securely with access controls
+      </li>
+      <li class="flex items-center gap-2">
+        <span class="icon icon-sm icon-check text-green-500 shrink-0"></span>
+        Target configuration encrypted at rest and during transit
+      </li>
+    </ul>
+  </div>
+
+  <%# Navigation %>
+  <div class="flex items-center justify-between">
+    <button type="button" class="btn-base btn-base-size btn-default-gray" data-action="click->target-wizard#prevStep">
+      <span class="icon icon-sm icon-arrow-left"></span>
+      Back
+    </button>
+    <%= button_tag type: "submit", class: "btn-base btn-base-size btn-default-primary" do %>
+      <span class="icon icon-sm icon-check"></span>
+      <%= target.persisted? ? "Update Target" : "Create Target" %>
+    <% end %>
+  </div>
+</div>

@@ -1,0 +1,425 @@
+<% pdf_mode = params[:pdf] == 'true' %>
+
+<% unless pdf_mode %>
+  <%= turbo_stream_from "pdf_notifications:company_#{current_user.current_company_id}" %>
+  <div id="pdf-status-<%= @report.id %>" style="display: none;"></div>
+<% end %>
+
+<div
+  id="report"
+  class="<%= pdf_mode ? 'bg-white print:shadow-none' : 'bg-white shadow-xl rounded-xl' %> overflow-hidden <%= pdf_mode ? 'border-0 m-0 p-0' : 'border border-gray-100 m-4' %>"
+  data-controller="<%= 'pdf-download' unless pdf_mode %>"
+  <%= "data-pdf-download-report-id-value='#{@report.id}'" unless pdf_mode %>
+>
+
+  <div class="<%= pdf_mode ? 'pt-8 pb-6 px-6 bg-gray-900' : 'py-12 px-8 bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900' %> text-white">
+    <div class="<%= pdf_mode ? 'flex items-center justify-between mb-8' : 'flex items-center justify-between mb-12' %>">
+      <% if BrandConfig.logo_path %>
+        <%= image_tag BrandConfig.logo_path, class: pdf_mode ? 'shrink-0 opacity-100 h-[24px]' : 'shrink-0 opacity-90 hover:opacity-100 transition-all duration-200 h-[30px]' %>
+      <% end %>
+      <div class="flex items-center gap-2">
+        <div class="<%= pdf_mode ? 'flex items-center gap-1.5 px-3 py-1.5 bg-gray-800 rounded' : 'flex items-center gap-2 px-4 py-2 bg-white/10 backdrop-blur-sm rounded-lg border border-white/20' %>">
+          <svg class="<%= pdf_mode ? 'w-3.5 h-3.5 text-white/80' : 'w-4 h-4 text-white/70' %>" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+          <span class="text-sm font-medium text-white/80"><%= @report.scan_duration %></span>
+        </div>
+        <div class="<%= pdf_mode ? 'flex items-center gap-1.5 px-3 py-1.5 bg-gray-800 rounded' : 'flex items-center gap-2 px-4 py-2 bg-white/10 backdrop-blur-sm rounded-lg border border-white/20' %>">
+          <svg class="<%= pdf_mode ? 'w-3.5 h-3.5 text-white/80' : 'w-4 h-4 text-white/70' %>" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+          </svg>
+          <span class="text-sm font-medium text-white/80">
+            <%= @report.probe_count %> <%= @report.probe_count == 1 ? 'Probe' : 'Probes' %>
+          </span>
+        </div>
+        <% if @report.is_variant_report? && @report.variant_count > 0 %>
+          <div class="<%= pdf_mode ? 'flex items-center gap-1.5 px-3 py-1.5 bg-orange-800/50 rounded' : 'flex items-center gap-2 px-4 py-2 bg-orange-500/20 backdrop-blur-sm rounded-lg border border-orange-400/30' %>">
+            <svg class="<%= pdf_mode ? 'w-3.5 h-3.5 text-orange-200' : 'w-4 h-4 text-orange-200' %>" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
+            </svg>
+            <span class="text-sm font-medium text-orange-100">
+              <%= @report.variant_count %> <%= @report.variant_count == 1 ? 'Variant' : 'Variants' %> Tested
+            </span>
+          </div>
+        <% end %>
+        <% unless pdf_mode %>
+          <button
+            type="button"
+            data-pdf-download-target="button"
+            data-pdf-download-url-value="<%= pdf_report_detail_path(@report) %>"
+            data-action="click->pdf-download#downloadPdf"
+            class="group px-5 py-2.5 bg-white/10 hover:bg-white/15 backdrop-blur-sm text-white rounded-lg inline-flex items-center gap-3 border border-white/20 hover:border-white/30 transition-all duration-200 shadow-lg shadow-black/10 cursor-pointer"
+          >
+            <%= image_tag 'pdf.svg', height: 20, width: 20, class: 'shrink-0 opacity-75 group-hover:opacity-100 transition-all duration-200', data: { pdf_download_target: 'icon' } %>
+            <span class="text-sm font-medium tracking-wide" data-pdf-download-target="text">Download PDF</span>
+          </button>
+        <% end %>
+      </div>
+    </div>
+
+    <div class="<%= pdf_mode ? 'space-y-2' : 'space-y-4' %>">
+      <h1 class="<%= pdf_mode ? 'text-3xl font-bold' : 'text-4xl font-bold tracking-tight' %>">
+        Report for <%= @report.target_name %>
+      </h1>
+      <p class="<%= pdf_mode ? 'text-gray-300 text-xs flex items-center gap-1.5' : 'text-gray-400 text-sm flex items-center gap-2' %>">
+        <svg class="<%= pdf_mode ? 'w-3.5 h-3.5 opacity-80' : 'w-4 h-4 opacity-70' %>" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2">
+          <path d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+        </svg>
+        Generated <%= l(@report.created_at, format: :long) %>
+      </p>
+    </div>
+  </div>
+
+  <% if @report.detector_results.exists? %>
+    <div class="<%= pdf_mode ? 'px-6 py-5 bg-gray-50 border-b border-gray-200' : 'px-8 py-6 bg-gradient-to-r from-gray-100 via-white to-gray-50 border-b border-gray-200' %>">
+      <div class="<%= pdf_mode ? 'mb-3' : 'mb-4' %>">
+        <h2 class="<%= pdf_mode ? 'text-lg font-bold text-gray-800' : 'text-xl font-bold text-gray-800' %>">Detector Statistics</h2>
+        <p class="<%= pdf_mode ? 'text-xs text-gray-500' : 'text-sm text-gray-500' %>">Security test success rates by detector</p>
+      </div>
+
+      <div class="<%= pdf_mode ? 'grid grid-cols-2 gap-3' : 'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3' %>">
+        <% @report.detector_results.includes(:detector).each do |result| %>
+          <%
+            detector_name = result.detector&.name || "Unknown"
+            short_name = detector_name != "Unknown" ? detector_name.split(".").last : "Unknown"
+            translated_name = I18n.t("detectors.names.#{short_name}", default: short_name)
+          %>
+          <div class="<%= pdf_mode ? 'bg-white rounded border border-gray-200 p-3 flex flex-col' : 'bg-white rounded-lg shadow-sm border border-gray-200 p-4 flex flex-col' %>">
+            <div class="<%= pdf_mode ? 'flex items-center mb-1.5 overflow-hidden' : 'flex items-center mb-2 overflow-hidden' %>">
+              <div class="shrink-0 flex items-center gap-2 mr-2">
+                <span class="<%= pdf_mode ? 'w-1.5 h-1.5 rounded-full bg-gray-400' : 'w-2 h-2 rounded-full bg-gray-300' %>"></span>
+              </div>
+              <div class="min-w-0 flex-1">
+                <span class="<%= pdf_mode ? 'text-xs font-medium text-gray-700 truncate block' : 'text-sm font-medium text-gray-700 truncate block' %>" title="<%= translated_name %>">
+                  <%= translated_name %>
+                </span>
+              </div>
+              <% if result.max_score.present? %>
+                <div class="shrink-0 ml-2">
+                  <div class="<%= pdf_mode ? 'text-[10px] bg-blue-50 text-blue-700 px-1.5 py-0.5 rounded-full flex items-center whitespace-nowrap' : 'text-xs bg-blue-50 text-blue-700 px-2 py-0.5 rounded-full flex items-center whitespace-nowrap' %>">
+                    <svg class="<%= pdf_mode ? 'w-2.5 h-2.5 mr-0.5 shrink-0' : 'w-3 h-3 mr-1 shrink-0' %>" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
+                    </svg>
+                    Max Score: <%= result.max_score %>%
+                  </div>
+                </div>
+              <% end %>
+            </div>
+            <div class="<%= pdf_mode ? 'flex items-center gap-1.5 ml-3 mt-0.5' : 'flex items-center gap-2 ml-4' %>">
+              <div class="flex items-center gap-1">
+                <span class="<%= pdf_mode ? 'font-medium' : 'font-semibold' %> <%= result.passed > 0 ? 'text-red-600' : 'text-emerald-600' %>">
+                  <%= result.passed %>
+                </span>
+                <span class="text-gray-500">/</span>
+                <span class="<%= pdf_mode ? 'text-gray-600' : 'font-medium text-gray-600' %>"><%= result.total %></span>
+              </div>
+              <div class="<%= pdf_mode ? 'text-[10px] bg-gray-100 px-1.5 py-0.5 rounded-full' : 'text-xs bg-gray-100 px-2 py-0.5 rounded-full' %>">
+                <%= result.asr_percentage %>% Attack Success Rate (ASR)
+              </div>
+            </div>
+          </div>
+        <% end %>
+      </div>
+    </div>
+  <% end %>
+
+  <% if @report.is_variant_report? && @report.variants_by_industry.any? %>
+    <div class="<%= pdf_mode ? 'px-6 py-5 bg-orange-50 border-b border-orange-200' : 'px-8 py-6 bg-gradient-to-r from-orange-50 via-orange-50/50 to-white border-b border-orange-200' %>">
+      <div class="<%= pdf_mode ? 'mb-3' : 'mb-4' %>">
+        <div class="flex items-center gap-2">
+          <svg class="<%= pdf_mode ? 'w-5 h-5 text-orange-600' : 'w-6 h-6 text-orange-600' %>" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
+          </svg>
+          <h2 class="<%= pdf_mode ? 'text-lg font-bold text-orange-900' : 'text-xl font-bold text-orange-900' %>">Threat Variants</h2>
+        </div>
+        <p class="<%= pdf_mode ? 'text-xs text-orange-700' : 'text-sm text-orange-700' %>">Industry-specific threat scenarios tested in this scan</p>
+      </div>
+
+      <details class="group" <%= 'open' if pdf_mode %>>
+        <summary class="<%= pdf_mode ? 'bg-white rounded border border-orange-200 p-3 cursor-pointer list-none' : 'bg-white rounded-lg border border-orange-200 p-4 cursor-pointer list-none hover:border-orange-300 transition-all duration-200 shadow-sm hover:shadow-md' %>">
+          <div class="flex items-center justify-between">
+            <div class="flex items-center gap-3">
+              <div class="<%= pdf_mode ? 'w-2 h-2 rounded-full bg-orange-500' : 'w-2.5 h-2.5 rounded-full bg-orange-500' %>"></div>
+              <span class="<%= pdf_mode ? 'font-semibold text-orange-900 text-sm' : 'font-semibold text-orange-900 text-base' %>">
+                <%= @report.variant_count %> <%= @report.variant_count == 1 ? 'Variant' : 'Variants' %> Across <%= @report.variants_by_industry.size %> <%= @report.variants_by_industry.size == 1 ? 'Industry' : 'Industries' %>
+              </span>
+            </div>
+            <% unless pdf_mode %>
+              <svg class="w-5 h-5 text-orange-400 transform transition-transform group-open:rotate-180" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+              </svg>
+            <% end %>
+          </div>
+        </summary>
+
+        <div class="<%= pdf_mode ? 'mt-3 space-y-3' : 'mt-4 space-y-4' %>">
+          <%
+            # Industry emoji mapping (consistent with scan edit page)
+            industry_emojis = {
+              "automotive" => "🚗",
+              "finance" => "💰",
+              "healthcare" => "🏥",
+              "retail" => "🛍️",
+              "technology" => "💻",
+              "energy" => "⚡",
+              "education" => "🎓",
+              "government" => "🏛️",
+              "manufacturing" => "🏭"
+            }
+          %>
+          <% @report.variants_by_industry.each do |industry, variants| %>
+            <%
+              industry_key = industry.name.downcase
+              emoji = industry_emojis[industry_key] || "🏢"
+            %>
+            <div class="<%= pdf_mode ? 'bg-white rounded border border-orange-100 p-3' : 'bg-white rounded-lg border border-orange-100 p-4 shadow-sm' %>">
+              <div class="<%= pdf_mode ? 'mb-2' : 'mb-3' %>">
+                <div class="flex items-center gap-2">
+                  <span class="<%= pdf_mode ? 'text-lg' : 'text-2xl' %>"><%= emoji %></span>
+                  <h3 class="<%= pdf_mode ? 'text-sm font-bold text-orange-900' : 'text-base font-bold text-orange-900' %>">
+                    <%= industry.name %>
+                  </h3>
+                  <span class="<%= pdf_mode ? 'text-[10px] bg-orange-100 text-orange-700 px-1.5 py-0.5 rounded-full font-medium' : 'text-xs bg-orange-100 text-orange-700 px-2 py-0.5 rounded-full font-medium' %>">
+                    <%= variants.count %> <%= variants.count == 1 ? 'variant' : 'variants' %>
+                  </span>
+                </div>
+              </div>
+              <div class="flex flex-wrap gap-2">
+                <% variants.group_by(&:threat_variant_subindustry).each do |subindustry, sub_variants| %>
+                  <div class="<%= pdf_mode ? 'inline-flex items-center gap-1.5 px-2.5 py-1 bg-orange-50 border border-orange-200 rounded' : 'inline-flex items-center gap-2 px-3 py-1.5 bg-orange-50 border border-orange-200 rounded-lg hover:bg-orange-100 transition-colors' %>">
+                    <span class="<%= pdf_mode ? 'w-1.5 h-1.5 rounded-full bg-orange-400' : 'w-2 h-2 rounded-full bg-orange-400' %>"></span>
+                    <span class="<%= pdf_mode ? 'text-xs text-orange-900 font-medium' : 'text-sm text-orange-900 font-medium' %>">
+                      <%= subindustry.name %>
+                    </span>
+                    <span class="<%= pdf_mode ? 'text-[9px] text-orange-600' : 'text-xs text-orange-600' %>">
+                      (<%= sub_variants.count %>)
+                    </span>
+                  </div>
+                <% end %>
+              </div>
+            </div>
+          <% end %>
+        </div>
+      </details>
+    </div>
+  <% end %>
+
+  <div class="<%= pdf_mode ? 'px-6 py-4 bg-white border-b border-gray-200' : 'px-8 py-6 bg-gradient-to-r from-gray-50 to-white border-b border-gray-200' %>">
+    <div class="flex items-center justify-between">
+      <h2 class="<%= pdf_mode ? 'text-xl font-bold text-gray-800' : 'text-2xl font-bold text-gray-800' %>">Probes</h2>
+      <% unless pdf_mode %>
+        <button type="button"
+                class="p-2 rounded-lg hover:bg-gray-100 transition-colors duration-200"
+                data-action="click->report#toggleAll">
+          <svg class="w-5 h-5 text-gray-400 transform transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2">
+            <path d="M19 9l-7 7-7-7" />
+          </svg>
+        </button>
+      <% end %>
+    </div>
+  </div>
+
+  <div class="<%= pdf_mode ? 'px-6 py-5 space-y-3' : 'px-8 py-6 grid gap-4' %>">
+    <%
+      # For variant reports with individual variant results, show them grouped
+      if @report.is_variant_report? && @report.variant_probe_results.any?
+        results_to_show = @report.variant_probe_results
+      else
+        # For regular reports or old variant reports, show probe_results as before
+        results_to_show = @report.probe_results
+      end
+    %>
+    <% results_to_show.each do |result| %>
+      <% probe = result.probe %>
+      <%
+        detector_name = result.detector&.name || "Unknown"
+        short_name = detector_name != "Unknown" ? detector_name.split(".").last : "Unknown"
+        translated_name = I18n.t("detectors.names.#{short_name}", default: short_name)
+        is_vulnerable = result.passed > 0
+        card_border_class = is_vulnerable ?
+          (pdf_mode ? 'border-red-200/80' : 'border-red-200/80 hover:border-red-300/60') :
+          (pdf_mode ? 'border-gray-200/80' : 'border-gray-200/80 hover:border-gray-300/60')
+        card_shadow_class = is_vulnerable ?
+          (pdf_mode ? 'shadow-sm' : 'shadow-lg shadow-red-500/5 hover:shadow-red-500/10') :
+          (pdf_mode ? 'shadow-sm' : 'shadow-lg shadow-gray-500/5 hover:shadow-gray-500/10')
+        indicator_color = is_vulnerable ? 'bg-red-500' : 'bg-emerald-500'
+        indicator_animation = is_vulnerable && !pdf_mode ? 'animate-pulse' : ''
+      %>
+
+      <details id="probe-<%= probe.id %>" class="group" data-report-target="details" <%= 'open' if pdf_mode && result.passed > 0 %>>
+        <summary class="<%= pdf_mode ? 'bg-white/90 backdrop-blur-sm rounded-lg border p-4 cursor-pointer list-none' : 'bg-white/90 backdrop-blur-sm rounded-xl border p-5 cursor-pointer list-none transition-all duration-300' %> <%= card_border_class %> <%= card_shadow_class %>">
+          <div class="<%= pdf_mode ? 'flex items-start justify-between gap-4' : 'flex items-start justify-between gap-6' %>">
+            <div class="flex-1 min-w-0">
+              <div class="<%= pdf_mode ? 'flex items-center flex-wrap gap-2 mb-2' : 'flex items-center gap-3 mb-3' %>">
+                <div class="<%= pdf_mode ? 'flex items-center gap-1.5' : 'flex items-center gap-2' %>">
+                  <div class="<%= pdf_mode ? 'w-2 h-2 rounded-full' : 'w-2.5 h-2.5 rounded-full' %> <%= indicator_color %> <%= indicator_animation %>"></div>
+                  <span class="<%= pdf_mode ? 'font-semibold text-gray-900 text-sm' : 'font-semibold text-gray-900 text-lg' %>"><%= probe.short_guid %>: <%= probe.name %></span>
+                </div>
+                <% if pdf_mode %>
+                  <span class="text-xs text-blue-600 font-medium bg-blue-50 px-2 py-0.5 rounded-md">
+                    Probe Details
+                  </span>
+                  <span class="text-xs text-blue-600 font-medium bg-blue-50 px-2 py-0.5 rounded-md inline-flex items-center gap-1">
+                    Threat Feed
+                    <svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.111 16.404a5.5 5.5 0 017.778 0M12 20h.01m-7.08-7.071c3.904-3.905 10.236-3.905 14.141 0M1.394 9.393c5.857-5.857 15.355-5.857 21.213 0" />
+                    </svg>
+                  </span>
+                <% else %>
+                  <a href="<%= probe_path(probe) %>"
+                     target="_blank"
+                     class="inline-flex items-center gap-1.5 text-sm text-blue-600 font-medium hover:text-blue-800 transition-all duration-200 bg-blue-50 hover:bg-blue-100 px-3 py-1.5 rounded-lg border border-blue-200/50 hover:border-blue-300">
+                    <span>Probe Details</span>
+                  </a>
+                  <% if (threat_feed_url = probe_portal_url(probe.guid)) %>
+                  <a href="<%= threat_feed_url %>"
+                     target="_blank"
+                     class="inline-flex items-center gap-1.5 text-sm text-blue-600 font-medium hover:text-blue-800 transition-all duration-200 bg-blue-50 hover:bg-blue-100 px-3 py-1.5 rounded-lg border border-blue-200/50 hover:border-blue-300">
+                    <span>Threat Feed</span>
+                    <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.111 16.404a5.5 5.5 0 017.778 0M12 20h.01m-7.08-7.071c3.904-3.905 10.236-3.905 14.141 0M1.394 9.393c5.857-5.857 15.355-5.857 21.213 0" />
+                    </svg>
+                  </a>
+                  <% end %>
+                <% end %>
+              </div>
+              <% if probe.description.present? %>
+                <p class="<%= pdf_mode ? 'text-xs text-gray-600 mb-3 leading-relaxed' : 'text-sm text-gray-600 mb-4 leading-relaxed max-w-3xl' %>">
+                  <%= probe.description %>
+                </p>
+              <% end %>
+              <div class="<%= pdf_mode ? 'flex flex-wrap items-center gap-2' : 'flex flex-wrap items-center gap-3' %>">
+                <div class="<%= pdf_mode ? 'flex items-center gap-1.5 bg-gray-50 px-2.5 py-1 rounded-full' : 'flex items-center gap-2 bg-gray-50 px-3 py-1.5 rounded-full border border-gray-200/50' %>">
+                  <svg class="<%= pdf_mode ? 'w-3 h-3 text-gray-400' : 'w-3.5 h-3.5 text-gray-400' %>" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+                  </svg>
+                  <span class="<%= pdf_mode ? 'text-[10px] font-medium text-gray-700' : 'text-xs font-medium text-gray-700' %>">
+                    <%= translated_name %>
+                  </span>
+                </div>
+                <% if result.max_score.present? %>
+                  <div class="<%= pdf_mode ? 'flex items-center gap-1.5 bg-blue-50 px-2.5 py-1 rounded-full' : 'flex items-center gap-2 bg-blue-50 px-3 py-1.5 rounded-full border border-blue-200/50' %>">
+                    <svg class="<%= pdf_mode ? 'w-3 h-3 text-blue-500' : 'w-3.5 h-3.5 text-blue-500' %>" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
+                    </svg>
+                    <span class="<%= pdf_mode ? 'text-[10px] font-medium text-blue-700' : 'text-xs font-medium text-blue-700' %>">
+                      Max Score: <%= result.max_score %>%
+                    </span>
+                  </div>
+                <% end %>
+                <div class="<%= pdf_mode ? 'flex items-center gap-1.5 bg-amber-50 px-2.5 py-1 rounded-full' : 'flex items-center gap-2 bg-amber-50 px-3 py-1.5 rounded-full border border-amber-200/50' %>">
+                  <svg class="<%= pdf_mode ? 'w-3 h-3 text-amber-500' : 'w-3.5 h-3.5 text-amber-500' %>" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                  </svg>
+                  <span class="<%= pdf_mode ? 'text-[10px] font-medium text-amber-700' : 'text-xs font-medium text-amber-700' %>">
+                    <%= result.asr_percentage %>% Success Rate
+                  </span>
+                </div>
+              </div>
+            </div>
+            <div class="flex items-center gap-4">
+              <div class="shrink-0">
+                <%
+                  status_bg_class = is_vulnerable ?
+                    (pdf_mode ? 'bg-gradient-to-br from-red-500 to-red-600' : 'bg-gradient-to-br from-red-500 to-red-600') :
+                    (pdf_mode ? 'bg-gradient-to-br from-emerald-500 to-emerald-600' : 'bg-gradient-to-br from-emerald-500 to-emerald-600')
+                  status_shadow_class = is_vulnerable ?
+                    (pdf_mode ? 'shadow-sm' : 'shadow-lg shadow-red-500/25 border border-red-400/20') :
+                    (pdf_mode ? 'shadow-sm' : 'shadow-lg shadow-emerald-500/25 border border-emerald-400/20')
+                %>
+                <div class="<%= pdf_mode ? 'text-white rounded-lg px-4 py-3 text-center' : 'text-white rounded-xl px-5 py-4 text-center' %> <%= status_bg_class %> <%= status_shadow_class %>">
+                  <% if result.total == 1 %>
+                    <!-- Single attempt case -->
+                    <div class="<%= pdf_mode ? 'flex items-center gap-2' : 'flex items-center gap-2.5' %>">
+                      <% if is_vulnerable %>
+                        <svg class="<%= pdf_mode ? 'w-4 h-4' : 'w-5 h-5' %>" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                          <path stroke-linecap="round" stroke-linejoin="round" d="M20.618 5.984A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622a11.906 11.906 0 00-.382-3.016zM12 9v2m0 4h.01" />
+                        </svg>
+                      <% else %>
+                        <svg class="<%= pdf_mode ? 'w-4 h-4' : 'w-5 h-5' %>" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                          <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+                        </svg>
+                      <% end %>
+                      <div class="text-left">
+                        <div class="<%= pdf_mode ? 'text-sm font-bold' : 'text-base font-bold tracking-tight' %>">
+                          <%= is_vulnerable ? 'VULNERABLE' : 'SECURE' %>
+                        </div>
+                        <div class="<%= pdf_mode ? 'text-[9px] opacity-85' : 'text-[10px] opacity-85' %>">
+                          <%= is_vulnerable ? 'Confirmed' : 'Protected' %>
+                        </div>
+                      </div>
+                    </div>
+                  <% else %>
+                    <!-- Multiple attempts case -->
+                    <div class="<%= pdf_mode ? 'text-xl font-bold' : 'text-2xl font-bold tracking-tight' %>">
+                      <%= result.passed %>
+                    </div>
+                    <div class="<%= pdf_mode ? 'text-[10px] font-medium opacity-90 mt-0.5' : 'text-xs font-medium opacity-90 mt-1' %>">
+                      successful <%= result.passed == 1 ? 'attack' : 'attacks' %>
+                    </div>
+                    <div class="<%= pdf_mode ? 'text-[9px] opacity-75 mt-0.5' : 'text-[10px] opacity-75 mt-1 border-t border-white/30 pt-1' %>">
+                      out of <%= result.total %> total
+                    </div>
+                  <% end %>
+                </div>
+              </div>
+              <% unless pdf_mode %>
+                <svg class="w-5 h-5 text-gray-400 transform transition-transform group-open:rotate-180" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2">
+                  <path d="M19 9l-7 7-7-7" />
+                </svg>
+              <% end %>
+            </div>
+          </div>
+        </summary>
+
+        <div class="<%= pdf_mode ? 'px-6 pb-4 page-break-inside-avoid' : 'px-8 pb-6' %>">
+          <div class="<%= pdf_mode ? 'pl-4 border-l-2 border-gray-200 space-y-3' : 'pl-6 border-l-2 border-gray-200 space-y-4' %>">
+            <% result.attempts.each do |attempt| %>
+              <div id="<%= attempt["uuid"] %>" class="<%= pdf_mode ? 'bg-gray-50/50 rounded p-4 border border-gray-100 break-inside-avoid' : 'bg-gray-50/50 rounded-lg p-5 shadow-sm border border-gray-100' %>">
+                <div class="<%= pdf_mode ? 'flex items-center justify-end mb-3' : 'flex items-center justify-end mb-4' %>">
+                  <% if attempt.dig('notes', 'score_percentage').present? %>
+                    <span class="<%= pdf_mode ? 'text-[10px] font-semibold bg-blue-50 text-blue-700 px-2 py-0.5 rounded-full' : 'text-xs font-semibold bg-blue-50 text-blue-700 px-3 py-1 rounded-full' %>">
+                      Score: <%= attempt.dig('notes', 'score_percentage') %>
+                    </span>
+                  <% end %>
+                </div>
+
+                <div class="<%= pdf_mode ? 'space-y-3' : 'space-y-4' %>">
+                  <div>
+                    <h4 class="<%= pdf_mode ? 'text-[10px] font-semibold text-gray-500 uppercase tracking-wider mb-1' : 'text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2' %>">Prompt</h4>
+                    <p class="<%= pdf_mode ? 'text-xs text-gray-700 bg-white p-2 rounded border border-gray-100' : 'text-sm text-gray-700 bg-white p-3 rounded border border-gray-100' %>"><%= TokenEstimator.extract_prompt_text(attempt['prompt']) %></p>
+                  </div>
+
+                  <div>
+                    <h4 class="<%= pdf_mode ? 'text-[10px] font-semibold text-gray-500 uppercase tracking-wider mb-1' : 'text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2' %>">Output</h4>
+                    <p class="<%= pdf_mode ? 'text-xs text-gray-700 bg-white p-2 rounded border border-gray-100' : 'text-sm text-gray-700 bg-white p-3 rounded border border-gray-100' %>"><%= TokenEstimator.extract_output_text(attempt['outputs']&.first) %></p>
+                  </div>
+
+                  <% if attempt.dig('notes', 'details').present? %>
+                    <div>
+                      <h4 class="<%= pdf_mode ? 'text-[10px] font-semibold text-gray-500 uppercase tracking-wider mb-1' : 'text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2' %>">Details</h4>
+                      <ul class="<%= pdf_mode ? 'list-none space-y-0.5' : 'list-none space-y-1' %>">
+                        <% attempt.dig('notes', 'details').each do |detail| %>
+                          <li class="<%= pdf_mode ? 'text-xs text-gray-700 flex items-center gap-1' : 'text-sm text-gray-700 flex items-center gap-2' %>">
+                            <span class="<%= pdf_mode ? 'w-1 h-1 bg-gray-400 rounded-full' : 'w-1.5 h-1.5 bg-gray-400 rounded-full' %>"></span>
+                            <%= detail %>
+                          </li>
+                        <% end %>
+                      </ul>
+                    </div>
+                  <% end %>
+                </div>
+              </div>
+            <% end %>
+          </div>
+        </div>
+      </details>
+    <% end %>
+  </div>
+
+  <% if params[:debug] == 'true' && !pdf_mode %>
+    <div class="<%= pdf_mode ? 'px-6 py-4' : 'px-8 py-6' %>">
+      <%= render partial: 'admin/reports/logs_section', locals: { report: @report } %>
+    </div>
+  <% end %>
+</div>

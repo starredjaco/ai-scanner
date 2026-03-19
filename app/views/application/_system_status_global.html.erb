@@ -1,0 +1,44 @@
+<%
+  # This partial is rendered by Turbo Stream broadcasts to update global stats for super admins
+  stats = local_assigns[:stats] || Rails.cache.read("running_scans_stats:global") || { scans: 0, variants: 0, priority: 0, total: 0 }
+  scans_count = stats[:scans]
+  variants_count = stats[:variants]
+  priority_count = stats[:priority] || 0
+  total_count = stats[:total]
+  is_active = total_count > 0
+  limit = SettingsService.parallel_scans_limit
+%>
+<div id="system-status-global" class="flex items-center justify-between text-sm mt-2 pt-4 border-t border-borderPrimary">
+  <span class="text-contentSecondary text-xs font-medium uppercase tracking-wider">System Total</span>
+  <div class="relative group">
+    <span class="inline-flex items-center px-2 py-1 rounded-md text-xs font-medium border bg-backgroundSecondary border-borderPrimary cursor-help">
+      <span class="<%= is_active ? 'text-contentPrimary' : 'text-contentSecondary' %>"><%= scans_count - priority_count %></span><% if variants_count > 0 || priority_count > 0 %><span>&nbsp;(<% if variants_count > 0 %><span class="text-purple-400">+<%= variants_count %></span><% end %><% if priority_count > 0 %><span class="text-amber-400">+<%= priority_count %></span><% end %>)</span><% end %><span class="text-contentSecondary mx-1">/</span><span class="<%= is_active ? 'text-contentPrimary' : 'text-contentSecondary' %>"><%= limit %></span>
+    </span>
+    <div class="absolute bottom-full right-0 mb-2 px-3 py-2 bg-zinc-900/95 backdrop-blur-md text-white text-xs rounded-xl invisible group-hover:opacity-100 group-hover:visible transition-opacity whitespace-nowrap pointer-events-none z-[999999]" style="box-shadow: 0 2px 10px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(255, 255, 255, 0.1); font-family: var(--brand-font-family), system-ui, sans-serif;">
+      <div class="space-y-1">
+        <div class="flex justify-between gap-6">
+          <span class="text-gray-300">Running scans:</span>
+          <span class="font-medium text-white"><%= scans_count - priority_count %></span>
+        </div>
+        <% if variants_count > 0 %>
+          <div class="flex justify-between gap-6">
+            <span class="text-gray-300">Variant scans:</span>
+            <span class="font-medium text-purple-400"><%= variants_count %></span>
+          </div>
+        <% end %>
+        <% if priority_count > 0 %>
+          <div class="flex justify-between gap-6">
+            <span class="text-gray-300">Priority scans:</span>
+            <span class="font-medium text-amber-400"><%= priority_count %></span>
+          </div>
+        <% end %>
+        <div class="border-t border-white/20 pt-1.5 mt-1.5">
+          <div class="flex justify-between gap-6">
+            <span class="text-gray-300">Parallel Scan Limit:</span>
+            <span class="font-medium text-white"><%= limit %></span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

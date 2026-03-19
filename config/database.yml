@@ -1,0 +1,158 @@
+<%
+# ERB Helper: Auto-generate database URL with suffix
+# If DATABASE_URL is set, create suffixed URLs for queue/cache/cable databases
+# Otherwise, return nil to fall back to individual connection parameters
+def auto_suffix_database_url(suffix)
+  base_url = ENV['DATABASE_URL']
+  return nil unless base_url
+
+  # Parse the base URL to add suffix to database name
+  # Format: postgresql://user:pass@host:port/dbname?params
+
+  # Split on ? to separate base URL from query params
+  base, query = base_url.split('?', 2)
+
+  # Extract database name (last component after final /)
+  if base =~ %r{^(.*/)(.*?)$}
+    url_base = $1
+    dbname = $2
+
+    # Append suffix to database name
+    suffixed_dbname = "#{dbname}#{suffix}"
+    suffixed_url = "#{url_base}#{suffixed_dbname}"
+
+    # Re-attach query params if present
+    suffixed_url += "?#{query}" if query
+
+    suffixed_url
+  else
+    nil
+  end
+end
+%>
+# PostgreSQL Database Configuration for Scanner
+#
+# Supports two configuration methods (in order of precedence):
+#   1. DATABASE_URL environment variable (Standard PostgreSQL URL format)
+#      - Example: postgresql://user:password@host:5432/scanner_production
+#      - Automatically generates queue/cache/cable databases with suffixes
+#      - Individual override URLs supported: DATABASE_QUEUE_URL, DATABASE_CACHE_URL, DATABASE_CABLE_URL
+#
+#   2. Individual POSTGRES_* environment variables
+#      - POSTGRES_HOST (default: postgres), POSTGRES_USER, POSTGRES_PASSWORD, POSTGRES_PORT
+#      - Database names via POSTGRES_PRIMARY_DB, POSTGRES_QUEUE_DB, etc.
+#
+# PostgreSQL runs as a separate container service (not embedded).
+# For managed PostgreSQL (AWS RDS, Azure, Google Cloud SQL, etc.):
+#   - Set DATABASE_URL or POSTGRES_HOST to your managed instance
+#   - Supports SSL/TLS encryption via URL query params or POSTGRES_SSL_* variables
+
+default: &default
+  adapter: postgresql
+  encoding: unicode
+
+  <% if ENV['DATABASE_URL'].present? %>
+  # DATABASE_URL takes precedence - Rails will parse this automatically
+  url: <%= ENV['DATABASE_URL'] %>
+  <% else %>
+  # Fall back to individual connection parameters
+  username: <%= ENV.fetch("POSTGRES_USER", "scanner") %>
+  password: <%= ENV.fetch("POSTGRES_PASSWORD") { "" } %>
+  host: <%= ENV.fetch("POSTGRES_HOST", "postgres") %>
+  port: <%= ENV.fetch("POSTGRES_PORT", 5432) %>
+  <% end %>
+
+  # Connection pool settings
+  pool: <%= ENV.fetch("POSTGRES_POOL_SIZE") { ENV.fetch("RAILS_MAX_THREADS") { 5 } } %>
+  timeout: <%= ENV.fetch("POSTGRES_POOL_TIMEOUT", 5000) %>
+
+  # SSL/TLS Configuration (only used when connecting to external PostgreSQL)
+  # sslmode options: disable, allow, prefer, require, verify-ca, verify-full
+  <% if ENV["POSTGRES_SSL_MODE"].present? %>
+  sslmode: <%= ENV["POSTGRES_SSL_MODE"] %>
+  <% end %>
+  <% if ENV["POSTGRES_SSL_CERT"].present? %>
+  sslcert: <%= ENV["POSTGRES_SSL_CERT"] %>
+  <% end %>
+  <% if ENV["POSTGRES_SSL_KEY"].present? %>
+  sslkey: <%= ENV["POSTGRES_SSL_KEY"] %>
+  <% end %>
+  <% if ENV["POSTGRES_SSL_ROOT_CERT"].present? %>
+  sslrootcert: <%= ENV["POSTGRES_SSL_ROOT_CERT"] %>
+  <% end %>
+
+development:
+  primary:
+    <<: *default
+    database: scanner_production
+  queue:
+    <<: *default
+    database: scanner_production_queue
+    migrations_paths: db/queue_migrate
+  cable:
+    <<: *default
+    database: scanner_production_cable
+    migrations_paths: db/cable_migrate
+  cache:
+    <<: *default
+    database: scanner_production_cache
+    migrations_paths: db/cache_migrate
+
+# Warning: The database defined as "test" will be erased and
+# re-generated from your development database when you run "rake".
+# Do not set this db to the same as development or production.
+test:
+  primary:
+    <<: *default
+    database: scanner_test
+  queue:
+    <<: *default
+    database: scanner_test_queue
+    migrations_paths: db/queue_migrate
+  cable:
+    <<: *default
+    database: scanner_test_cable
+    migrations_paths: db/cable_migrate
+  cache:
+    <<: *default
+    database: scanner_test_cache
+    migrations_paths: db/cache_migrate
+
+# Production database configuration
+# Uses PostgreSQL with 4 separate databases for isolation
+# Database names can be customized via environment variables or DATABASE_URL
+production:
+  primary:
+    <<: *default
+    <% if ENV['DATABASE_URL'].present? %>
+    # DATABASE_URL is already set in *default, no need to override
+    <% else %>
+    database: <%= ENV.fetch("POSTGRES_PRIMARY_DB", "scanner_production") %>
+    <% end %>
+  queue:
+    <<: *default
+    <% queue_url = ENV['DATABASE_QUEUE_URL'] || auto_suffix_database_url('_queue') %>
+    <% if queue_url.present? %>
+    url: <%= queue_url %>
+    <% else %>
+    database: <%= ENV.fetch("POSTGRES_QUEUE_DB", "scanner_production_queue") %>
+    <% end %>
+    migrations_paths: db/queue_migrate
+  cache:
+    <<: *default
+    <% cache_url = ENV['DATABASE_CACHE_URL'] || auto_suffix_database_url('_cache') %>
+    <% if cache_url.present? %>
+    url: <%= cache_url %>
+    <% else %>
+    database: <%= ENV.fetch("POSTGRES_CACHE_DB", "scanner_production_cache") %>
+    <% end %>
+    migrations_paths: db/cache_migrate
+  cable:
+    <<: *default
+    <% cable_url = ENV['DATABASE_CABLE_URL'] || auto_suffix_database_url('_cable') %>
+    <% if cable_url.present? %>
+    url: <%= cable_url %>
+    <% else %>
+    database: <%= ENV.fetch("POSTGRES_CABLE_DB", "scanner_production_cable") %>
+    <% end %>
+    migrations_paths: db/cable_migrate

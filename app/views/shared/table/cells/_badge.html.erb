@@ -1,0 +1,9 @@
+<%# Badge cell - colored pill/badge %>
+<% badge_color = table_cell_badge_color(item, column) %>
+<% badge_text = value.respond_to?(:humanize) ? value.humanize : value.to_s %>
+
+<% if badge_text.present? %>
+  <%= table_badge(badge_text, color: badge_color) %>
+<% else %>
+  <span class="text-sm text-gray-500 dark:text-gray-400">—</span>
+<% end %>

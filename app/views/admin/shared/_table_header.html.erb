@@ -1,0 +1,68 @@
+<% # Locals: title, current_page (optional), hide_filters (optional), action_buttons (optional) %>
+<% hide_filters = local_assigns[:hide_filters] || false %>
+<% action_buttons = local_assigns[:action_buttons] || [] %>
+
+<div class="w-full flex items-center justify-between p-3 pr-0" id="custom-page-header">
+  <h1 class="text-white text-4xl font-sans font-normal">
+    <%= title %>
+  </h1>
+  <% if action_buttons.any? %>
+    <div class="flex items-center gap-2 admin-action-items">
+      <% action_buttons.each do |button| %>
+        <%
+          # Check if using new button helper format (has variant/color/size keys)
+          use_helper = button.key?(:variant) || button.key?(:color) || button.key?(:size)
+        %>
+        <% if use_helper %>
+          <%# New button utility class system %>
+          <%
+            btn_variant = button[:variant] || :default
+            btn_color = button[:color] || :gray
+            btn_size = button[:size] || :base
+            btn_icon = button[:icon]
+
+            # Build button classes
+            size_class = btn_size == :base ? "btn-base-size" : "btn-#{btn_size}"
+            btn_classes = "btn-base #{size_class} btn-#{btn_variant}-#{btn_color}"
+
+            # Determine icon size
+            icon_size = case btn_size.to_sym
+              when :xs then "icon-xs"
+              when :sm then "icon-sm"
+              else "icon-md"
+            end
+          %>
+          <% if button[:method] && button[:method] != :get %>
+            <%# Non-GET requests need button_tag wrapped in form %>
+            <%= form_with url: button[:path], method: button[:method], data: button[:data], class: "inline-flex" do %>
+              <%= button_tag type: "submit", class: btn_classes do %>
+                <% if btn_icon %>
+                  <span class="icon <%= icon_size %> <%= btn_icon %>"></span>
+                <% end %>
+                <%= button[:label] %>
+              <% end %>
+            <% end %>
+          <% else %>
+            <%# GET requests use link styled as button %>
+            <%= link_to button[:path], class: btn_classes, data: button[:data], target: button[:target] do %>
+              <% if btn_icon %>
+                <span class="icon <%= icon_size %> <%= btn_icon %>"></span>
+              <% end %>
+              <%= button[:label] %>
+            <% end %>
+          <% end %>
+        <% else %>
+          <%# Legacy class-based approach (backward compatibility) %>
+          <% btn_class = button[:class] || "action-item-button" %>
+          <% if button[:method] && button[:method] != :get %>
+            <%# Use button_to for non-GET methods (DELETE, POST, etc.) with Turbo %>
+            <% form_data = button[:data] ? { turbo_confirm: button[:data][:turbo_confirm] } : {} %>
+            <%= button_to button[:label], button[:path], method: button[:method], class: btn_class, form: { data: form_data } %>
+          <% else %>
+            <%= link_to button[:label], button[:path], class: btn_class, data: button[:data] %>
+          <% end %>
+        <% end %>
+      <% end %>
+    </div>
+  <% end %>
+</div>

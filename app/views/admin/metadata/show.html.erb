@@ -1,0 +1,36 @@
+<%
+  action_buttons = [
+    { label: "Edit Metadata", path: edit_metadatum_path(@metadatum), variant: :default, color: :gray, size: :base, icon: "icon-edit" },
+    { label: "Delete Metadata", path: metadatum_path(@metadatum), method: :delete, data: { turbo_confirm: "Are you sure?" }, variant: :default, color: :gray, size: :base, icon: "icon-trash" }
+  ]
+%>
+<%= render partial: "admin/shared/show_header", locals: { title: "Metadata: #{@metadatum.key}", action_buttons: action_buttons } %>
+
+<div class="py-6" id="admin-content">
+  <div class="rounded-lg bg-backgroundPrimary border border-borderPrimary p-6">
+    <table class="w-full">
+      <tbody class="divide-y divide-borderPrimary">
+        <tr>
+          <th class="py-3 pr-4 text-left text-sm font-medium text-contentSecondary w-1/4">ID</th>
+          <td class="py-3 text-sm text-contentPrimary"><%= @metadatum.id %></td>
+        </tr>
+        <tr>
+          <th class="py-3 pr-4 text-left text-sm font-medium text-contentSecondary w-1/4">Key</th>
+          <td class="py-3 text-sm text-contentPrimary"><%= @metadatum.key %></td>
+        </tr>
+        <tr>
+          <th class="py-3 pr-4 text-left text-sm font-medium text-contentSecondary w-1/4">Value</th>
+          <td class="py-3 text-sm text-contentPrimary"><%= @metadatum.value %></td>
+        </tr>
+        <tr>
+          <th class="py-3 pr-4 text-left text-sm font-medium text-contentSecondary w-1/4">Created On</th>
+          <td class="py-3 text-sm text-contentPrimary"><%= @metadatum.created_at.strftime("%B %d, %Y %H:%M") %></td>
+        </tr>
+        <tr>
+          <th class="py-3 pr-4 text-left text-sm font-medium text-contentSecondary w-1/4">Updated At</th>
+          <td class="py-3 text-sm text-contentPrimary"><%= @metadatum.updated_at.strftime("%B %d, %Y %H:%M") %></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>

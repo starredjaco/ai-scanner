@@ -1,0 +1,215 @@
+<div class="bg-backgroundPrimary rounded-lg border border-borderPrimary p-6 mb-6">
+  <h3 class="text-lg font-semibold mb-4 text-primary">
+    Schedule Configuration
+  </h3>
+
+  <div data-controller="scan-recurrence"
+       data-scan-recurrence-timezone-value="<%= Time.zone.tzinfo.name %>"
+       data-scan-recurrence-probe-category-outlet="[data-controller='probe-category']"
+       class="space-y-6">
+
+    <%= f.hidden_field :recurrence,
+        data: { "scan-recurrence-target": "recurrenceInput" },
+        value: scan.recurrence ? scan.recurrence.to_json : "" %>
+
+    <!-- Frequency Selection Section -->
+    <div class="mb-6">
+      <h4 class="text-sm font-medium text-contentSecondary mb-3">Frequency</h4>
+
+      <!-- Hidden select for form submission -->
+      <% current_type = if scan.recurrence.is_a?(IceCube::Rule)
+           case scan.recurrence.class.name
+           when "IceCube::HourlyRule" then "hourly"
+           when "IceCube::DailyRule" then "daily"
+           when "IceCube::WeeklyRule" then "weekly"
+           when "IceCube::MonthlyRule" then "monthly"
+           else "none"
+           end
+         else
+           "none"
+         end %>
+
+      <%= select_tag "recurrence_type",
+          options_for_select([
+            ["None", "none", { selected: current_type == "none" }],
+            ["Hourly", "hourly", { selected: current_type == "hourly" }],
+            ["Daily", "daily", { selected: current_type == "daily" }],
+            ["Weekly", "weekly", { selected: current_type == "weekly" }],
+            ["Monthly", "monthly", { selected: current_type == "monthly" }]
+          ]),
+          id: "recurrence_type",
+          class: "hidden w-full",
+          data: {
+            "scan-recurrence-target" => "recurrenceType",
+            action: "change->scan-recurrence#updateVisibility change->scan-recurrence#updateRecurrenceValue"
+          } %>
+
+      <!-- Visual frequency buttons -->
+      <div class="flex flex-wrap gap-3" data-scan-recurrence-target="frequencyButtons">
+        <% [
+             { value: "none", icon: "icon-x", label: "None", desc: "One-time scan" },
+             { value: "hourly", icon: "icon-clock", label: "Hourly", desc: "Every hour" },
+             { value: "daily", icon: "icon-calendar", label: "Daily", desc: "Every day" },
+             { value: "weekly", icon: "icon-calendar-days", label: "Weekly", desc: "Select days" },
+             { value: "monthly", icon: "icon-calendar-days", label: "Monthly", desc: "Select day" }
+           ].each do |freq| %>
+          <button type="button"
+                  class="frequency-button flex-1 px-4 py-3 rounded-lg border-2 bg-backgroundSecondary border-borderPrimary text-center hover:border-primary hover:bg-backgroundSecondary/80 transition-all focus:ring-2 focus:ring-primary data-[selected=true]:border-primary data-[selected=true]:bg-primary/10"
+                  data-action="click->scan-recurrence#selectFrequency"
+                  data-frequency="<%= freq[:value] %>">
+            <div class="flex flex-col items-center gap-1">
+              <span class="icon icon-lg <%= freq[:icon] %> text-contentSecondary"></span>
+              <span class="text-sm font-medium text-contentPrimary"><%= freq[:label] %></span>
+              <span class="text-xs text-contentTertiary"><%= freq[:desc] %></span>
+            </div>
+          </button>
+        <% end %>
+      </div>
+    </div>
+
+    <!-- Time Selection Section -->
+    <div class="mb-6" data-scan-recurrence-target="timeConfigSection">
+      <div class="flex gap-4 items-start">
+        <!-- Day of month (monthly only) -->
+        <div class="hidden w-1/2" data-scan-recurrence-target="monthlyOptions">
+          <h4 class="text-sm font-medium text-contentSecondary mb-3">Day of Month</h4>
+          <%= select_tag "recurrence_day_of_month",
+              options_for_select((1..28).map { |d| [d.to_s, d.to_s] }, "1"),
+              id: "recurrence_day_of_month",
+              class: "standard-input w-full px-3 py-2 text-sm bg-backgroundPrimary border border-borderPrimary rounded-lg text-white transition-colors appearance-none cursor-pointer pr-10",
+              data: {
+                "scan-recurrence-target" => "dayOfMonthInput",
+                action: "change->scan-recurrence#updateRecurrenceValue"
+              } %>
+        </div>
+
+        <!-- Time inputs -->
+        <div class="w-1/2 flex-1">
+          <h4 class="text-sm font-medium text-contentSecondary mb-3">Time</h4>
+
+          <!-- Minutes dropdown (for hourly) -->
+          <%= select_tag "recurrence_minutes",
+              options_for_select((0..59).map { |m| [m.to_s.rjust(2, "0"), m.to_s.rjust(2, "0")] }, "00"),
+              id: "recurrence_minutes",
+              class: "standard-input hidden w-full px-3 py-2 text-sm bg-backgroundPrimary border border-borderPrimary rounded-lg text-white transition-colors appearance-none cursor-pointer pr-10",
+              data: {
+                "scan-recurrence-target" => "minutesInput minutesDropdown",
+                action: "change->scan-recurrence#updateRecurrenceValue"
+              } %>
+
+          <!-- Time field (for daily/weekly/monthly) -->
+          <%= time_field_tag "recurrence_time",
+              "00:00",
+              id: "recurrence_time",
+              class: "standard-input w-full px-3 py-2 text-sm bg-backgroundPrimary border border-borderPrimary rounded-lg text-white transition-colors",
+              data: {
+                "scan-recurrence-target" => "timeInput timeDropdown",
+                action: "change->scan-recurrence#updateRecurrenceValue"
+              } %>
+        </div>
+      </div>
+
+      <!-- Help text -->
+      <div class="flex items-center gap-2 text-sm text-contentTertiary mt-2">
+        <span class="icon icon-sm icon-globe"></span>
+        <span data-scan-recurrence-target="minutesHelp" class="hidden">Select minutes past the hour (0-59)</span>
+        <span data-scan-recurrence-target="timeHelp">Times are displayed in <%= Time.zone.name %></span>
+      </div>
+    </div>
+
+    <!-- Hourly options -->
+    <div class="mb-6 bg-primary/10 border border-primary/30 rounded-lg p-4 hidden" data-scan-recurrence-target="hourlyOptions">
+      <div class="flex items-start gap-2">
+        <span class="icon icon-md icon-clock text-primary mt-0.5"></span>
+        <div>
+          <p class="text-sm text-contentPrimary font-medium mb-1">Hourly Schedule</p>
+          <p class="text-sm text-contentSecondary">This scan will run every hour at the specified minute. Only the minute value will be used.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Daily options -->
+    <div class="mb-6 bg-primary/10 border border-primary/30 rounded-lg p-4 hidden" data-scan-recurrence-target="dailyOptions">
+      <div class="flex items-start gap-2">
+        <span class="icon icon-md icon-calendar text-primary mt-0.5"></span>
+        <div>
+          <p class="text-sm text-contentPrimary font-medium mb-1">Daily Schedule</p>
+          <p class="text-sm text-contentSecondary">This scan will run every day at the specified time.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Weekly options -->
+    <div class="mb-6 bg-backgroundSecondary border border-borderPrimary rounded-lg p-4 hidden" data-scan-recurrence-target="weeklyOptions">
+      <div class="flex items-center gap-2 mb-3">
+        <span class="icon icon-md icon-calendar text-contentSecondary"></span>
+        <h5 class="text-sm font-medium text-contentPrimary">Select Days</h5>
+      </div>
+
+      <div class="flex justify-center gap-2 flex-wrap">
+        <% [
+             { id: "weekday_1", value: 1, label: "Mon", full: "Monday" },
+             { id: "weekday_2", value: 2, label: "Tue", full: "Tuesday" },
+             { id: "weekday_3", value: 3, label: "Wed", full: "Wednesday" },
+             { id: "weekday_4", value: 4, label: "Thu", full: "Thursday" },
+             { id: "weekday_5", value: 5, label: "Fri", full: "Friday" },
+             { id: "weekday_6", value: 6, label: "Sat", full: "Saturday" },
+             { id: "weekday_0", value: 0, label: "Sun", full: "Sunday" }
+           ].each do |day| %>
+          <div class="flex flex-col items-center">
+            <%= check_box_tag "weekday",
+                day[:value],
+                false,
+                id: day[:id],
+                class: "hidden",
+                data: { action: "change->scan-recurrence#updateRecurrenceValue" } %>
+            <label for="<%= day[:id] %>"
+                   class="day-button"
+                   title="<%= day[:full] %>"
+                   data-action="click->scan-recurrence#handleCheckboxClick">
+              <%= day[:label] %>
+            </label>
+          </div>
+        <% end %>
+      </div>
+
+      <style>
+        .day-button {
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          width: 4rem;
+          height: 4rem;
+          border-radius: 0.75rem;
+          font-size: 0.875rem;
+          font-weight: 600;
+          cursor: pointer;
+          transition: all 0.2s ease-in-out;
+          border: 2px solid #3F3F46;
+          background-color: #27272A;
+          color: #A1A1AA;
+        }
+        .day-button:hover {
+          background-color: #3F3F46;
+          color: #F89D53;
+          border-color: #F89D53;
+          transform: translateY(-1px);
+          box-shadow: 0 4px 8px rgba(248, 157, 83, 0.15);
+        }
+        .day-button--selected {
+          background-color: #F89D53;
+          color: white;
+          border-color: #F89D53;
+          box-shadow: 0 4px 12px rgba(248, 157, 83, 0.3);
+          font-weight: 700;
+        }
+        .day-button--selected:hover {
+          background-color: #F89D53;
+          color: white;
+          transform: translateY(-1px);
+          box-shadow: 0 4px 12px rgba(248, 157, 83, 0.4);
+        }
+      </style>
+    </div>
+  </div>
+</div>

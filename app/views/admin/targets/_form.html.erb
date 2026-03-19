@@ -1,0 +1,52 @@
+<%= form_with model: target,
+             url: target.persisted? ? target_path(target) : targets_path,
+             local: true,
+             data: {
+               controller: "target-wizard",
+               "target-wizard-editing-value": target.persisted?,
+               "target-wizard-current-step-value": target.errors.any? ? 2 : (target.persisted? ? 2 : 1),
+               "target-wizard-selected-provider-value": infer_provider_from_target(target),
+               "target-wizard-templates-value": provider_templates_for_js.to_json,
+               "target-wizard-error-fields-value": target.errors.attribute_names.to_json
+             },
+             class: "max-w-4xl mx-auto py-6" do |f| %>
+
+  <%# Global error display — visible on any step %>
+  <% if target.errors.any? %>
+    <div class="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4 mb-6">
+      <div class="flex">
+        <span class="icon icon-md icon-x-circle text-red-400 mr-2 shrink-0"></span>
+        <div>
+          <h3 class="text-sm font-medium text-red-800 dark:text-red-200">
+            <%= pluralize(target.errors.count, "error") %> prohibited this target from being saved:
+          </h3>
+          <ul class="mt-2 text-sm text-red-700 dark:text-red-300 list-disc list-inside">
+            <% target.errors.full_messages.each do |message| %>
+              <li><%= message %></li>
+            <% end %>
+          </ul>
+        </div>
+      </div>
+    </div>
+  <% end %>
+
+  <%# Step indicator %>
+  <%= render "admin/targets/wizard/step_indicator" %>
+
+  <%# Step 1: Choose Provider %>
+  <div data-target-wizard-target="step" data-step="1"
+       class="<%= 'hidden' if target.persisted? || target.errors.any? %>">
+    <%= render "admin/targets/wizard/step1_provider", f: f, target: target %>
+  </div>
+
+  <%# Step 2: Configure %>
+  <div data-target-wizard-target="step" data-step="2"
+       class="<%= 'hidden' unless target.persisted? || target.errors.any? %>">
+    <%= render "admin/targets/wizard/step2_configure", f: f, target: target %>
+  </div>
+
+  <%# Step 3: Review & Create %>
+  <div data-target-wizard-target="step" data-step="3" class="hidden">
+    <%= render "admin/targets/wizard/step3_review", f: f, target: target %>
+  </div>
+<% end %>

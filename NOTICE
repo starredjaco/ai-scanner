@@ -1,0 +1,13 @@
+Scanner
+Copyright 2026 Scanner Contributors
+
+Licensed under the Apache License, Version 2.0
+
+This product includes software developed by NVIDIA Corporation
+(garak - https://github.com/NVIDIA/garak), licensed under the Apache License 2.0.
+
+This product includes Apache ECharts
+(https://github.com/apache/echarts), licensed under the Apache License 2.0.
+
+This product includes Choices.js
+(https://github.com/Choices-js/Choices), licensed under the MIT License.

@@ -1,0 +1,5 @@
+<%# Status tag cell - Yes/No, enabled/disabled style badges %>
+<% text = value.is_a?(TrueClass) ? "Yes" : (value.is_a?(FalseClass) ? "No" : value.to_s) %>
+<% status = column[:status_map].is_a?(Proc) ? column[:status_map].call(item) : nil %>
+
+<%= status_tag(text, status) %>

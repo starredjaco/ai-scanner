@@ -1,0 +1,6 @@
+<%# Custom cell - renders via provided block/proc %>
+<% if column[:content].is_a?(Proc) %>
+  <%= column[:content].call(item, value) %>
+<% else %>
+  <%= value %>
+<% end %>

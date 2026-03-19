@@ -1,0 +1,153 @@
+<%
+  # Build action buttons for the header
+  action_buttons = []
+
+  # View Deleted / View Active toggle
+  if params.dig(:q, :deleted_at_not_null) == "1"
+    action_buttons << { label: "View Active", path: targets_path, variant: :default, color: :gray, size: :base }
+  else
+    action_buttons << { label: "View Deleted", path: targets_path(q: { deleted_at_not_null: "1" }), variant: :default, color: :gray, size: :base }
+  end
+
+  # New Target button (primary style - orange)
+  action_buttons << {
+    label: "New Target",
+    path: new_target_path,
+    variant: :default,
+    color: :primary,
+    size: :base
+  }
+%>
+
+<%= render partial: "admin/shared/table_header", locals: { title: "Targets", current_page: :index, action_buttons: action_buttons } %>
+
+<%# Card wrapper for filter panel and table %>
+<div class="rounded-lg bg-backgroundPrimary border border-borderPrimary overflow-hidden">
+  <%# Filter Panel %>
+  <%
+    filters = [
+      { key: :name, label: "Name", type: :text, placeholder: "Search by name..." },
+      { key: :target_type, label: "Type", type: :select, collection: @filter_target_types },
+      { key: :status, label: "Status", type: :select, collection: @filter_statuses },
+      { key: :model_type, label: "Model Type", type: :select, collection: @filter_model_types },
+      { key: :created_at, label: "Created", type: :date_range }
+    ]
+  %>
+  <%= render "shared/filter/filter_panel",
+      ransack: @q,
+      filters: filters,
+      form_url: targets_path %>
+
+<%
+  # Define columns for the targets table
+  columns = [
+    {
+      key: :name,
+      label: "Name",
+      type: :custom,
+      sortable: true,
+      sort_key: :name,
+      render: ->(target) {
+        content_tag(:div, class: "flex items-center gap-2") do
+          safe_join([
+            target_status_indicator(target),
+            link_to(target.name, target_path(target), class: "text-primary hover:underline")
+          ])
+        end
+      }
+    },
+    {
+      key: :target_type,
+      label: "Target Type",
+      type: :custom,
+      render: ->(target) { content_tag(:span, target.target_type.humanize, class: "text-sm text-textMuted") }
+    },
+    {
+      key: :model_url,
+      label: "Model/URL",
+      type: :custom,
+      render: ->(target) {
+        if target.webchat?
+          if target.web_chat_url.present?
+            link_to target.web_chat_url.truncate(40), target.web_chat_url, target: "_blank", class: "text-sm text-primary hover:underline"
+          else
+            content_tag(:span, "Not configured", class: "text-sm text-zinc-500 italic")
+          end
+        else
+          content_tag(:span, "#{target.model_type}: #{target.model}", class: "text-sm text-textMuted")
+        end
+      }
+    },
+    {
+      key: :tokens_per_second,
+      label: "tok/s",
+      type: :custom,
+      sortable: true,
+      render: ->(target) {
+        if target.api? && target.tokens_per_second.present?
+          content_tag(:span, "#{target.tokens_per_second.round(1)} tok/s", class: "text-sm font-medium text-textMuted")
+        else
+          content_tag(:span, "—", class: "text-sm text-gray-400 dark:text-gray-500")
+        end
+      }
+    },
+    {
+      key: :created_at,
+      label: "Created On",
+      type: :date,
+      sortable: true
+    },
+    {
+      key: :updated_at,
+      label: "Updated",
+      type: :date,
+      sortable: true
+    },
+    {
+      key: :actions,
+      label: "Actions",
+      type: :custom,
+      align: :right,
+      render: ->(target) {
+        content_tag(:div, class: "flex items-center justify-end gap-3") do
+          if target.deleted?
+            safe_join([
+              link_to(reports_path(q: { target_id_eq: target.id }), class: "text-actionButton hover:text-textMuted transition-colors", title: "View Reports") do
+                content_tag(:span, "", class: "icon icon-sm icon-view")
+              end,
+              link_to(restore_target_path(target), method: :patch, class: "text-actionButton hover:text-textMuted transition-colors", title: "Restore", data: { turbo_confirm: "Are you sure you want to restore this target?" }) do
+                content_tag(:span, "", class: "icon icon-sm icon-arrow-left-start-on-rectangle")
+              end
+            ])
+          else
+            links = []
+
+            # View Reports
+            links << link_to(reports_path(q: { target_id_eq: target.id }), class: "text-actionButton hover:text-textMuted transition-colors", title: "View Reports") do
+              content_tag(:span, "", class: "icon icon-sm icon-view")
+            end
+
+            # Run Scan
+            links << link_to(new_scan_path(target_id: target.id), class: "text-actionButton hover:text-textMuted transition-colors", title: "Run Scan") do
+              content_tag(:span, "", class: "icon icon-sm icon-play")
+            end
+
+            safe_join(links)
+          end
+        end
+      }
+    }
+  ]
+%>
+
+  <%= render "shared/table/table",
+      collection: @targets,
+      columns: columns,
+      ransack: @q,
+      pagy: @pagy,
+      batch_actions: @show_deleted ? nil : [:validate, :delete],
+      batch_form_url: @show_deleted ? nil : batch_targets_path,
+      empty_message: "No targets found",
+      empty_action: { label: "Create Target", path: new_target_path }
+  %>
+</div>

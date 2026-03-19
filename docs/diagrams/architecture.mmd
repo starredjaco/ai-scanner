@@ -1,0 +1,16 @@
+graph TD
+  subgraph A[Kubernetes Cluster]
+    subgraph B[pod]
+      C[thruster]
+      D[puma]
+      E[solid_queue]
+    end
+    F[PostgreSQL]
+    G[PersistentVolume]
+  end
+
+  C --> D
+  D --> E
+  D --> F
+  E --> F
+  F --> G

@@ -1,0 +1,83 @@
+{
+  "azure": [
+    "AzureOpenAIGenerator"
+  ],
+  "base": [
+    "Generator"
+  ],
+  "bedrock": [
+    "BedrockGenerator"
+  ],
+  "cohere": [
+    "CohereGenerator"
+  ],
+  "ggml": [
+    "GgmlGenerator"
+  ],
+  "groq": [
+    "GroqChat"
+  ],
+  "guardrails": [
+    "NeMoGuardrails"
+  ],
+  "huggingface": [
+    "HFInternalServerError",
+    "HFLoadingException",
+    "HFRateLimitException",
+    "InferenceAPI",
+    "InferenceEndpoint",
+    "LLaVA",
+    "Model",
+    "Pipeline"
+  ],
+  "langchain": [
+    "LangChainLLMGenerator"
+  ],
+  "langchain_serve": [
+    "LangChainServeLLMGenerator"
+  ],
+  "litellm": [
+    "LiteLLMGenerator"
+  ],
+  "mistral": [
+    "MistralGenerator"
+  ],
+  "nemo": [
+    "NeMoGenerator"
+  ],
+  "nim": [
+    "NVMultimodal",
+    "NVOpenAIChat",
+    "NVOpenAICompletion",
+    "Vision"
+  ],
+  "nvcf": [
+    "NvcfChat",
+    "NvcfCompletion"
+  ],
+  "ollama": [
+    "OllamaGenerator",
+    "OllamaGeneratorChat"
+  ],
+  "openai": [
+    "OpenAICompatible",
+    "OpenAIGenerator",
+    "OpenAIReasoningGenerator"
+  ],
+  "openrouter": [
+    "OpenRouterGenerator"
+  ],
+  "rasa": [
+    "RasaRestGenerator"
+  ],
+  "replicate": [
+    "InferenceEndpoint",
+    "ReplicateGenerator"
+  ],
+  "rest": [
+    "RestGenerator"
+  ],
+  "watsonx": [
+    "WatsonXGenerator"
+  ]
+}

@@ -1,0 +1,11 @@
+<div class="bg-white dark:bg-zinc-900 rounded-lg shadow-sm border border-gray-100 dark:border-zinc-700 p-3 lg:p-4">
+  <div class="flex items-center gap-2 mb-4">
+    <h3 class="text-white font-sans text-base font-normal">
+      <%= link_to "Probe Disclosure Stats", probes_path(order: "name_asc", "q[disclosure_status_eq]": "0", commit: "Filter"), class: "text-white hover:text-primary transition-colors" %>
+    </h3>
+    <%= render 'shared/info_tooltip', aria_label: 'Information about Probe Disclosure Stats', content: t('dashboard.tooltips.probe_disclosure') %>
+  </div>
+  <div data-dashboard-target="probeDisclosureChart" class="w-full h-56 sm:h-64" aria-label="Probe Disclosure Stats chart">
+    <%= render partial: "charts/shared/loading_notice" %>
+  </div>
+</div>

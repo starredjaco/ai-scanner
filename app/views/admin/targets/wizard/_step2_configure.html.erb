@@ -1,0 +1,191 @@
+<div class="max-w-2xl mx-auto">
+  <%# Provider badge %>
+  <div class="flex items-center justify-between mb-6 p-3 rounded-lg bg-backgroundSecondary border border-borderPrimary"
+       data-target-wizard-target="providerBadge">
+    <div class="flex items-center gap-2">
+      <span class="text-sm text-contentSecondary">Provider:</span>
+      <span class="text-sm font-semibold text-contentPrimary" data-target-wizard-target="providerBadgeLabel">-</span>
+    </div>
+    <% unless target.persisted? %>
+      <button type="button" class="text-xs text-primary hover:underline cursor-pointer" data-action="click->target-wizard#goToStep" data-step="1">
+        Change
+      </button>
+    <% end %>
+  </div>
+
+  <div class="rounded-lg bg-backgroundPrimary border border-borderPrimary p-6">
+    <%# Webchat experimental warning %>
+    <div class="hidden mb-6 bg-amber-50 dark:bg-amber-900/30 p-4 rounded-lg border-2 border-amber-200 dark:border-amber-700"
+         data-target-wizard-target="webchatNotification">
+      <div class="flex items-start space-x-3">
+        <span class="icon icon-lg icon-warning text-amber-600 dark:text-amber-400 shrink-0"></span>
+        <div>
+          <h4 class="text-base font-bold text-amber-800 dark:text-amber-300 mb-1">Experimental Feature</h4>
+          <p class="text-sm text-amber-700 dark:text-amber-400">
+            Webchat target support is currently in experimental phase. Auto-detection uses AI to identify chat interface elements.
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <%# Name field (always visible) %>
+    <div class="mb-6">
+      <div class="flex items-center gap-1.5 mb-2">
+        <%= f.label :name, class: "text-sm font-medium text-contentSecondary" %>
+        <%= render "shared/info_tooltip", aria_label: "Name info", content: "Choose a descriptive name to easily identify this target in scans and reports" %>
+      </div>
+      <%= f.text_field :name,
+          required: true,
+          placeholder: "e.g., Production GPT-4 API",
+          class: "input-base",
+          data: { "target-wizard-target": "nameField" } %>
+      <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">A descriptive name to identify this target</p>
+    </div>
+
+    <%# API fields %>
+    <div data-target-wizard-target="apiFields">
+      <div class="border-t border-borderPrimary pt-6 mt-2 mb-4">
+        <h3 class="text-lg font-semibold mb-4 text-primary">API Configuration</h3>
+      </div>
+
+      <%# Model type - hidden field for template providers %>
+      <%= f.hidden_field :model_type, data: { "target-wizard-target": "modelTypeField" } %>
+
+      <%# Model type - grouped select for custom mode (no name attr — syncs to hidden field via Stimulus) %>
+      <div class="mb-4 hidden" data-target-wizard-target="modelTypeSelectWrapper">
+        <div class="flex items-center gap-1.5 mb-2">
+          <label class="text-sm font-medium text-contentSecondary">Model Type</label>
+          <%= render "shared/info_tooltip", aria_label: "Model type info", content: "The garak generator class that handles communication with your AI provider" %>
+        </div>
+        <%= select_tag nil,
+                       grouped_options_for_select(grouped_model_type_options, target.model_type, prompt: "Select a platform"),
+                       class: "input-select",
+                       data: { "target-wizard-target": "modelTypeSelect", action: "change->target-wizard#syncModelType" } %>
+        <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">Select the AI provider platform</p>
+      </div>
+
+      <div class="mb-4">
+        <div class="flex items-center gap-1.5 mb-2">
+          <%= f.label :model, class: "text-sm font-medium text-contentSecondary" %>
+          <%= render "shared/info_tooltip", aria_label: "Model info", content: "The specific model identifier used by the provider (e.g., gpt-4o, claude-3-opus, gemini-2.0-flash)" %>
+        </div>
+        <%= f.text_field :model,
+                        placeholder: "e.g., gpt-4o, claude-3-opus",
+                        class: "input-base",
+                        data: { "target-wizard-target": "modelField" } %>
+        <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">The specific model identifier</p>
+      </div>
+
+      <div class="mb-4">
+        <div class="flex items-center gap-1.5 mb-2">
+          <%= f.label :json_config, "JSON Config", class: "text-sm font-medium text-contentSecondary" %>
+          <%= render "shared/info_tooltip", aria_label: "JSON config info", content: "Optional JSON configuration passed to the garak generator. Use $API_KEY as a placeholder for secrets stored in environment variables" %>
+        </div>
+        <%= f.text_area :json_config, rows: 8,
+                        placeholder: '{"rest": {"RestGenerator": {...}}}',
+                        class: "input-textarea font-mono",
+                        data: { "target-wizard-target": "jsonConfigField" } %>
+        <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">
+          Enter configuration in valid JSON format. Use <code class="text-xs bg-backgroundSecondary px-1 py-0.5 rounded">$API_KEY</code> placeholders for secrets stored in environment variables.
+        </p>
+      </div>
+    </div>
+
+    <%# Webchat fields %>
+    <div class="hidden" data-target-wizard-target="webChatFields">
+      <div class="border-t border-borderPrimary pt-6 mt-2 mb-4">
+        <h3 class="text-lg font-semibold mb-4 text-primary flex items-center gap-2">
+          <span class="icon icon-md icon-chat text-contentSecondary"></span>
+          Webchat Configuration
+        </h3>
+      </div>
+
+      <div class="bg-backgroundSecondary border border-borderPrimary p-4 rounded-lg mb-4">
+        <div class="mb-4">
+          <div class="flex items-center gap-1.5 mb-2">
+            <label class="text-sm font-medium text-contentSecondary">
+              Chat URL <span class="text-red-500">*</span>
+            </label>
+            <%= render "shared/info_tooltip", aria_label: "Chat URL info", content: "The full public URL of the web page containing the chat interface you want to test" %>
+          </div>
+          <%= text_field_tag "web_chat_url", target.web_chat_url,
+                            placeholder: "https://example.com/chat",
+                            data: { "webchat-required": true, "web-config-field": "url", action: "input->target-wizard#updateWebConfig" },
+                            class: "input-base" %>
+          <p class="mt-1 text-sm text-contentSecondary">Enter the full URL of the web page containing the chat interface</p>
+        </div>
+
+        <%# Auto-detect button — uses existing webchat-auto-detect controller %>
+        <div data-controller="webchat-auto-detect">
+          <button type="button"
+                  class="btn-base btn-base-size btn-default-primary w-full"
+                  data-action="click->webchat-auto-detect#detect"
+                  data-webchat-auto-detect-target="detectButton">
+            <span class="icon icon-md icon-lightbulb"></span>
+            <span data-webchat-auto-detect-target="buttonText">Auto-Detect Selectors with AI</span>
+          </button>
+
+          <div class="mt-3 hidden" data-webchat-auto-detect-target="progressContainer">
+            <div class="mb-2">
+              <div class="text-xs font-medium text-contentSecondary mb-1">Detection Progress</div>
+              <div class="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2.5 overflow-hidden">
+                <div class="bg-gradient-to-r from-orange-500 to-orange-600 h-2.5 rounded-full transition-all duration-300 ease-out"
+                     style="width: 0%"
+                     role="progressbar"
+                     data-webchat-auto-detect-target="progressBar"></div>
+              </div>
+            </div>
+          </div>
+
+          <div class="mt-2 hidden" data-webchat-auto-detect-target="message"></div>
+        </div>
+      </div>
+
+      <div class="mb-4">
+        <div class="flex items-center gap-1.5 mb-2">
+          <%= f.label :web_config, "Web Config (JSON) *", class: "text-sm font-medium text-contentSecondary" %>
+          <%= render "shared/info_tooltip", aria_label: "Web config info", content: "JSON configuration for webchat selectors. Use Auto-Detect to populate this automatically" %>
+        </div>
+        <%= f.text_area :web_config, rows: 10,
+                        value: target.parsed_web_config.present? ? JSON.pretty_generate(target.parsed_web_config) : nil,
+                        class: "input-textarea font-mono",
+                        data: { "target-wizard-target": "webConfigField" } %>
+        <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">
+          Required fields: url, selectors.input_field, selectors.response_container
+        </p>
+      </div>
+    </div>
+
+    <%# Description (collapsible) %>
+    <div class="border-t border-borderPrimary pt-6 mt-6" data-controller="toggle">
+      <button type="button" class="flex items-center gap-2 text-sm font-medium text-contentSecondary mb-4 hover:text-contentPrimary transition-colors cursor-pointer"
+              data-action="click->toggle#toggle">
+        <span class="icon icon-sm icon-chevron-down transition-transform duration-200" data-toggle-target="icon"></span>
+        Additional Details
+        <span class="text-xs text-contentTertiary">(optional)</span>
+      </button>
+      <div class="hidden" data-toggle-target="content">
+        <div class="mb-4">
+          <%= f.label :description, class: "block text-sm font-medium text-contentSecondary mb-2" %>
+          <%= f.text_area :description, rows: 4,
+                          placeholder: "Describe the target's purpose, environment, and any special considerations...",
+                          class: "input-textarea",
+                          data: { "target-wizard-target": "descriptionField" } %>
+          <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">Optional: Add notes about this target</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <%# Navigation %>
+  <div class="flex items-center justify-between mt-6">
+    <button type="button" class="btn-base btn-base-size btn-default-gray" data-action="click->target-wizard#prevStep">
+      <span class="icon icon-sm icon-arrow-left"></span>
+      Back
+    </button>
+    <button type="button" class="btn-base btn-base-size btn-default-primary" data-action="click->target-wizard#nextStep">
+      Next: Review
+      <span class="icon icon-sm icon-arrow-right"></span>
+    </button>
+  </div>
+</div>
