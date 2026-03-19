@@ -1,0 +1,142 @@
+<%#
+  Reusable Filter Panel Component
+
+  Usage:
+    render "shared/filter/filter_panel",
+        ransack: @q,
+        filters: [
+          { key: :name, label: "Name", type: :text },
+          { key: :target_id, label: "Target", type: :association, collection: Target.pluck(:name, :id) },
+          { key: :created_at, label: "Created", type: :date_range }
+        ],
+        form_url: scans_path(scope: @current_scope)  # Optional, defaults to current path
+
+  Filter types:
+    :text        - Text input with contains predicate
+    :select      - Dropdown from collection array
+    :association - Dropdown for belongs_to relationship
+    :date_range  - Two date pickers (from/to)
+%>
+
+<% ransack ||= nil %>
+<% filters ||= [] %>
+<% form_url ||= request.path %>
+
+<% # Check if any filters are active %>
+<% active_filters = filters.count { |f|
+  begin
+    case f[:type]
+    when :date_range
+      ransack&.send("#{f[:key]}_gteq").present? || ransack&.send("#{f[:key]}_lteq").present?
+    when :text
+      # Support custom predicates (e.g., target_name_cont for association text search)
+      predicate = f[:predicate] || "#{f[:key]}_cont"
+      ransack&.send(predicate).present?
+    when :association
+      # For associations, check {key}_id_eq predicate
+      id_key = f[:key].to_s.end_with?("_id") ? f[:key] : "#{f[:key]}_id"
+      ransack&.send("#{id_key}_eq").present?
+    else
+      ransack&.send("#{f[:key]}_eq").present?
+    end
+  rescue NoMethodError
+    # Handle case where Ransack doesn't have this predicate
+    false
+  end
+} %>
+
+<div data-controller="filter-panel" class="relative">
+  <%# Filter Toggle Button %>
+  <div class="flex items-center justify-between px-4 py-3 bg-backgroundPrimary">
+    <%= button_tag type: "button", class: "btn-base btn-base-size btn-default-gray", data: { action: "click->filter-panel#toggle" } do %>
+      <span class="icon icon-md icon-filter"></span>
+      Add Filters
+      <% if active_filters > 0 %>
+        <span class="inline-flex items-center justify-center px-2 py-0.5 text-xs font-medium text-white bg-primary rounded-md ml-2">
+          <%= active_filters %>
+        </span>
+      <% end %>
+    <% end %>
+
+    <% if active_filters > 0 %>
+      <button
+        type="button"
+        data-action="click->filter-panel#clearFilters"
+        class="text-sm text-textMuted hover:text-red-400 transition-colors"
+      >
+        Clear Filters
+      </button>
+    <% end %>
+  </div>
+
+  <%# Mobile Backdrop %>
+  <div
+    data-filter-panel-target="backdrop"
+    data-action="click->filter-panel#close"
+    class="hidden fixed inset-0 bg-black/50 z-40 md:hidden transition-opacity duration-300 opacity-0"
+  ></div>
+
+  <%# Filter Panel - Desktop: expandable, Mobile: slide-in drawer %>
+  <div
+    data-filter-panel-target="panel"
+    class="
+      <%= active_filters > 0 ? '' : 'hidden max-h-0 opacity-0' %>
+      md:relative md:z-auto md:bg-backgroundPrimary md:border-b md:border-borderPrimary
+      md:transition-all md:duration-300 md:ease-in-out md:overflow-hidden
+      <%= active_filters > 0 ? 'md:max-h-96 md:opacity-100' : '' %>
+
+      fixed inset-y-0 right-0 z-50 w-80 bg-backgroundPrimary shadow-xl
+      transform transition-transform duration-300 ease-in-out translate-x-full
+      md:relative md:inset-auto md:translate-x-0 md:w-auto md:shadow-none
+    "
+  >
+    <%# Mobile Header %>
+    <div class="flex items-center justify-between p-4 border-b border-borderPrimary md:hidden">
+      <h3 class="text-lg font-semibold text-white">Filters</h3>
+      <button
+        type="button"
+        data-action="click->filter-panel#close"
+        class="p-1 text-textMuted hover:text-white"
+      >
+        <span class="icon icon-lg icon-x"></span>
+      </button>
+    </div>
+
+    <%# Filter Form %>
+    <%= form_with url: form_url, method: :get, local: true, class: "p-4" do |f| %>
+      <%# Preserve existing non-filter params (exclude q hash and page) %>
+      <% request.query_parameters.each do |key, value| %>
+        <% unless key == "q" || key == "page" %>
+          <%= hidden_field_tag key, value %>
+        <% end %>
+      <% end %>
+
+      <%# Filter Fields Grid %>
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+        <% filters.each do |filter| %>
+          <%= render "shared/filter/filter_field", filter: filter, ransack: ransack %>
+        <% end %>
+      </div>
+
+      <%# Action Buttons %>
+      <div class="flex items-center gap-3 mt-4 pt-4 border-t border-borderPrimary">
+        <%= button_tag type: "submit", class: "btn-base btn-base-size btn-default-primary" do %>
+          <span class="icon icon-md icon-search"></span>
+          Apply Filters
+        <% end %>
+
+        <%= button_tag type: "button", class: "btn-base btn-base-size btn-default-gray", data: { action: "click->filter-panel#clearFilters" } do %>
+          Reset
+        <% end %>
+
+        <button
+          type="button"
+          data-action="click->filter-panel#close"
+          class="inline-flex items-center px-4 py-2 text-sm font-medium text-textMuted hover:text-white transition-colors md:hidden"
+        >
+          Close
+        </button>
+      </div>
+    <% end %>
+  </div>
+</div>

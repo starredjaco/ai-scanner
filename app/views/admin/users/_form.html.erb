@@ -1,0 +1,116 @@
+<%= form_with model: user, url: user.persisted? ? user_path(user) : users_path, local: true, class: "space-y-6" do |f| %>
+  <% if user.errors.any? %>
+    <div class="bg-red-950/20 border border-red-400/30 rounded-lg p-4">
+      <div class="flex">
+        <span class="icon icon-md icon-x-circle text-red-400 mr-2 shrink-0"></span>
+        <div>
+          <h3 class="text-sm font-medium text-contentPrimary">
+            <%= pluralize(user.errors.count, "error") %> prohibited this user from being saved:
+          </h3>
+          <ul class="mt-2 text-sm text-contentSecondary list-disc list-inside">
+            <% user.errors.full_messages.each do |message| %>
+              <li><%= message %></li>
+            <% end %>
+          </ul>
+        </div>
+      </div>
+    </div>
+  <% end %>
+
+  <div class="rounded-lg bg-backgroundPrimary border border-borderPrimary">
+    <div class="p-6 space-y-6">
+      <%# Section: Account Information %>
+      <h3 class="text-xl font-sans font-semibold text-primary tracking-wide mb-4">
+        Account Information
+      </h3>
+
+      <div>
+        <%= f.label :email, class: "block text-sm font-medium text-contentSecondary mb-2" %>
+        <%= f.email_field :email,
+            required: true,
+            placeholder: "user@example.com",
+            class: "input-base" %>
+      </div>
+
+      <div>
+        <%= f.label :time_zone, "Time Zone", class: "block text-sm font-medium text-contentSecondary mb-2" %>
+        <%= f.select :time_zone,
+            ActiveSupport::TimeZone.all.sort_by { |tz| [tz.utc_offset, tz.name] }.map { |tz| [tz.to_s, tz.name] },
+            { include_blank: "Select a time zone" },
+            { class: "input-select" } %>
+        <p class="mt-1 text-sm text-contentTertiary">Used to display dates and times in your local timezone</p>
+      </div>
+
+      <% if policy(user).manage_super_admin_flag? %>
+        <div class="flex items-center">
+          <%= f.check_box :super_admin %>
+          <%= f.label :super_admin, "Super Admin", class: "ml-2 block text-sm text-contentPrimary" %>
+          <p class="ml-6 text-sm text-contentSecondary">— grants full administrative privileges</p>
+        </div>
+      <% end %>
+
+      <%# Section: Security %>
+      <%
+        show_password_fields = false
+        password_note = nil
+
+        if policy(user).manage_super_admin_flag?
+          show_password_fields = true
+        elsif user.new_record?
+          show_password_fields = true
+        elsif user.id == current_user.id
+          show_password_fields = true
+        else
+          password_note = "Only Super Administrators can change other users' passwords."
+        end
+      %>
+
+      <div class="border-t border-borderPrimary pt-6">
+        <h3 class="text-base font-sans font-semibold text-white tracking-wide mb-4">
+          Security
+        </h3>
+      </div>
+
+      <% if show_password_fields %>
+        <div data-controller="password-visibility">
+          <%= f.label :password, user.new_record? ? "Password" : "Password", class: "block text-sm font-medium text-contentSecondary mb-2" %>
+          <div class="relative">
+            <%= f.password_field :password,
+                autocomplete: "new-password",
+                placeholder: user.new_record? ? "Enter password" : "Leave blank to keep current password",
+                class: "input-base pr-10" %>
+          </div>
+          <% unless user.new_record? %>
+            <p class="mt-1 text-sm text-contentTertiary">Leave blank if you don't want to change it</p>
+          <% end %>
+        </div>
+
+        <div data-controller="password-visibility">
+          <%= f.label :password_confirmation, "Password Confirmation", class: "block text-sm font-medium text-contentSecondary mb-2" %>
+          <div class="relative">
+            <%= f.password_field :password_confirmation,
+                autocomplete: "new-password",
+                placeholder: "Confirm password",
+                class: "input-base pr-10" %>
+          </div>
+        </div>
+      <% elsif password_note %>
+        <div class="bg-yellow-950/20 border border-yellow-400/30 rounded-lg p-4">
+          <div class="flex">
+            <span class="icon icon-md icon-warning text-yellow-400 mr-2 shrink-0"></span>
+            <p class="text-sm text-contentSecondary"><%= password_note %></p>
+          </div>
+        </div>
+      <% end %>
+
+      <%# Form Actions %>
+      <div class="flex items-center justify-end gap-3 pt-4">
+        <%= link_to "Cancel",
+            user.new_record? ? users_path : user_path(user),
+            class: "btn-base btn-base-size btn-default-gray" %>
+        <%= button_tag user.new_record? ? "Create User" : "Update User",
+            type: "submit", class: "btn-base btn-base-size btn-default-primary" %>
+      </div>
+    </div>
+  </div>
+<% end %>

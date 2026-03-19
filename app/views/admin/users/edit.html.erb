@@ -1,0 +1,22 @@
+<%
+  action_buttons = []
+
+  # Only show delete button if not editing own account
+  unless @user == current_user
+    action_buttons << {
+      label: "Delete",
+      path: user_path(@user),
+      method: :delete,
+      data: { turbo_confirm: "Are you sure you want to delete this user?" },
+      variant: :default,
+      color: :gray,
+      size: :base,
+      icon: "icon-trash"
+    }
+  end
+%>
+<%= render partial: "admin/shared/show_header", locals: { title: "Edit User: #{@user.email}", action_buttons: action_buttons } %>
+
+<div class="py-6">
+  <%= render "form", user: @user %>
+</div>

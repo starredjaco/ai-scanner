@@ -1,0 +1,10 @@
+<%# Icon with text cell %>
+<% icon = column[:icon].is_a?(Proc) ? column[:icon].call(item) : column[:icon] %>
+<% icon_color = column[:icon_color].is_a?(Proc) ? column[:icon_color].call(item) : (column[:icon_color] || "text-gray-500 dark:text-gray-400") %>
+
+<div class="flex items-center gap-2">
+  <% if icon.present? %>
+    <span class="icon icon-sm <%= icon %> <%= icon_color %>"></span>
+  <% end %>
+  <span class="text-sm text-gray-900 dark:text-gray-100"><%= value || "—" %></span>
+</div>

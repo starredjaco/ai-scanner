@@ -1,0 +1,12 @@
+<%# Number cell - numeric display with optional formatting %>
+<% precision = column[:precision] || 0 %>
+<% prefix = column[:prefix] || "" %>
+<% suffix = column[:suffix] || "" %>
+
+<% if value.present? %>
+  <span class="text-sm text-gray-900 dark:text-gray-100 font-medium tabular-nums">
+    <%= prefix %><%= precision > 0 ? number_with_precision(value, precision: precision) : value %><%= suffix %>
+  </span>
+<% else %>
+  <span class="text-sm text-gray-500 dark:text-gray-400">—</span>
+<% end %>

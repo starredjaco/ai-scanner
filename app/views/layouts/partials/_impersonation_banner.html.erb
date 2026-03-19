@@ -1,0 +1,14 @@
+<% if impersonating? %>
+  <div class="xl:ms-60 bg-yellow-50 dark:bg-yellow-900/20 border-b border-yellow-200 dark:border-yellow-800 text-yellow-800 dark:text-yellow-200 px-4 py-2 text-center text-sm font-medium flex items-center justify-center gap-4">
+    <span class="flex items-center gap-1.5">
+      <span class="icon icon-sm icon-user"></span>
+      Viewing as <strong><%= current_user.email %></strong>
+      (<%= current_user.company&.name %>)
+    </span>
+    <%= button_to "Return to Admin",
+          impersonation_path,
+          method: :delete,
+          form: { data: { turbo_frame: "_top" } },
+          class: "btn-base btn-xs btn-outline-gray" %>
+  </div>
+<% end %>

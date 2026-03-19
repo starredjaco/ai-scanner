@@ -1,0 +1,86 @@
+<%
+  form_url = if environment_variable.persisted?
+    environment_variable_path(environment_variable)
+  elsif defined?(@target) && @target
+    target_environment_variables_path(@target)
+  else
+    environment_variables_path
+  end
+%>
+<%= form_with model: environment_variable, url: form_url, local: true, class: "space-y-6" do |f| %>
+  <% if environment_variable.errors.any? %>
+    <div class="bg-red-950/20 border border-red-400/30 rounded-lg p-4">
+      <div class="flex">
+        <span class="icon icon-md icon-x-circle text-red-400 mr-2 shrink-0"></span>
+        <div>
+          <h3 class="text-sm font-medium text-contentPrimary">
+            <%= pluralize(environment_variable.errors.count, "error") %> prohibited this environment variable from being saved:
+          </h3>
+          <ul class="mt-2 text-sm text-contentSecondary list-disc list-inside">
+            <% environment_variable.errors.full_messages.each do |message| %>
+              <li><%= message %></li>
+            <% end %>
+          </ul>
+        </div>
+      </div>
+    </div>
+  <% end %>
+
+  <div class="rounded-lg bg-backgroundPrimary border border-borderPrimary">
+    <div class="p-6 space-y-6">
+      <%# Section Header %>
+      <h3 class="text-xl font-sans font-semibold text-primary tracking-wide mb-4">
+        Environment Variable Configuration
+      </h3>
+
+      <%# Target Selection %>
+      <div>
+        <%= f.label :target_id, "Target", class: "block text-sm font-medium text-contentSecondary mb-2" %>
+        <%= f.collection_select :target_id,
+                                Target.order(:name),
+                                :id,
+                                :name,
+                                { include_blank: "None (Global)" },
+                                class: "input-select" %>
+        <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">Leave empty for a global environment variable that applies to all targets</p>
+      </div>
+
+      <%# Name Field %>
+      <div>
+        <%= f.label :env_name, "Name", class: "block text-sm font-medium text-contentSecondary mb-2" %>
+        <%= f.text_field :env_name,
+                         required: true,
+                         class: "input-base font-mono",
+                         placeholder: "e.g., API_KEY, OPENAI_API_KEY" %>
+        <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">Use SCREAMING_SNAKE_CASE for environment variable names</p>
+      </div>
+
+      <%# Value Field %>
+      <div>
+        <%= f.label :env_value, "Value", class: "block text-sm font-medium text-contentSecondary mb-2" %>
+        <%= f.text_area :env_value,
+                        rows: 3,
+                        required: true,
+                        class: "input-textarea font-mono",
+                        placeholder: "Enter environment variable value" %>
+
+      </div>
+
+      <%# Form Actions %>
+      <div class="flex items-center justify-end gap-3 pt-4">
+        <%
+          cancel_url = if environment_variable.persisted?
+            environment_variable_path(environment_variable)
+          elsif defined?(@target) && @target
+            target_environment_variables_path(@target)
+          else
+            environment_variables_path
+          end
+        %>
+        <%= link_to "Cancel", cancel_url, class: "btn-base btn-base-size btn-default-gray" %>
+        <%= button_tag environment_variable.new_record? ? "Create Environment Variable" : "Update Environment Variable",
+                     type: "submit", class: "btn-base btn-base-size btn-default-primary" %>
+      </div>
+    </div>
+  </div>
+<% end %>

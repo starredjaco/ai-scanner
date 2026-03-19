@@ -1,0 +1,166 @@
+<% if flash[:notice] %>
+  <div class="mb-6 p-4 bg-lime-950/20 border border-lime-400/30 rounded-lg">
+    <div class="flex items-center">
+      <span class="icon icon-md icon-check-circle text-lime-400 mr-2"></span>
+      <span class="text-contentPrimary font-medium"><%= flash[:notice] %></span>
+    </div>
+  </div>
+<% end %>
+
+<% if flash[:alert] %>
+  <div class="mb-6 p-4 bg-red-950/20 border border-red-400/30 rounded-lg">
+    <div class="flex items-center">
+      <span class="icon icon-md icon-x-circle text-red-400 mr-2"></span>
+      <span class="text-contentPrimary font-medium"><%= flash[:alert] %></span>
+    </div>
+  </div>
+<% end %>
+
+<%= render partial: "admin/shared/show_header", locals: { title: "Settings", hide_filters: true } %>
+
+<div class="py-6">
+  <%= form_with url: settings_path, method: :patch, class: "settings-form" do |f| %>
+    <div class="rounded-lg bg-backgroundPrimary border border-borderPrimary">
+      <div class="px-6 py-4">
+        <h2 class="text-xl font-sans font-semibold text-primary tracking-wide">System Configuration</h2>
+      </div>
+
+    <div class="p-6">
+      <div class="space-y-6">
+        <div class="relative">
+          <%= f.label :parallel_scans_limit, "Parallel Scans Limit", class: "block text-sm font-medium text-contentSecondary mb-2" %>
+
+          <div class="flex items-start space-x-4">
+            <div class="flex-1">
+              <%= f.number_field :parallel_scans_limit,
+                value: @parallel_scans_limit,
+                min: 1,
+                max: 20,
+                required: true,
+                class: "input-base w-32 font-mono" %>
+
+              <div class="mt-2 text-sm text-contentSecondary">
+                <span class="flex items-start">
+                  <span class="icon icon-sm icon-info mr-1 mt-0.5 text-contentPrimary"></span>
+                  <span>Maximum number of scans that can run simultaneously. Recommended range: 3-10 based on your system resources.</span>
+                </span>
+              </div>
+            </div>
+
+            <div class="shrink-0 px-4 py-2 bg-backgroundSecondary rounded-lg">
+              <div class="text-xs text-contentTertiary uppercase tracking-wide mb-1">Current</div>
+              <div class="text-2xl font-bold text-contentPrimary font-mono"><%= @parallel_scans_limit %></div>
+            </div>
+          </div>
+
+          <div class="mt-3 p-3 bg-zinc-800/30 border border-zinc-500/30 rounded-md">
+            <div class="flex">
+              <span class="icon icon-md icon-info text-contentPrimary mr-2"></span>
+              <div class="text-sm text-contentSecondary">
+                <ul class="list-disc list-inside space-y-1">
+                  <li>Higher values allow more concurrent scans but require more system resources</li>
+                  <li>Lower values reduce system load but may increase scan queue wait times</li>
+                  <li>Currently <%= @running_scans_count %> scan(s) running</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="relative mt-8 pt-6 border-t border-borderPrimary">
+          <%= f.label :parallel_attempts, "Parallel Attempts", class: "block text-sm font-medium text-contentSecondary mb-2" %>
+
+          <div class="flex items-start space-x-4">
+            <div class="flex-1">
+              <%= f.number_field :parallel_attempts,
+                value: @parallel_attempts,
+                min: 1,
+                max: 100,
+                required: true,
+                class: "input-base w-32 font-mono" %>
+
+              <div class="mt-2 text-sm text-contentSecondary">
+                <span class="flex items-start">
+                  <span class="icon icon-sm icon-info mr-1 mt-0.5 text-contentPrimary"></span>
+                  <span>Number of simultaneous requests sent to the AI model during scanning (garak <code class="bg-backgroundSecondary px-1 rounded">--parallel_attempts</code>).</span>
+                </span>
+              </div>
+            </div>
+
+            <div class="shrink-0 px-4 py-2 bg-backgroundSecondary rounded-lg">
+              <div class="text-xs text-contentTertiary uppercase tracking-wide mb-1">Current</div>
+              <div class="text-2xl font-bold text-contentPrimary font-mono"><%= @parallel_attempts %></div>
+            </div>
+          </div>
+
+          <div class="mt-3 p-3 bg-zinc-800/30 border border-zinc-500/30 rounded-md">
+            <div class="flex">
+              <span class="icon icon-md icon-info text-contentPrimary mr-2"></span>
+              <div class="text-sm text-contentSecondary">
+                <ul class="list-disc list-inside space-y-1">
+                  <li>Higher values: Faster scans but may hit API rate limits</li>
+                  <li>Lower values: Slower scans but more reliable with rate-limited APIs</li>
+                  <li>Recommended: OpenAI (5-10), Anthropic (3-5), Local models (20-50)</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <% if lookup_context.exists?("admin/settings/portal_token_section", [], true) %>
+          <%= render partial: "admin/settings/portal_token_section", locals: { f: f } %>
+        <% end %>
+
+        <% if policy(:settings).manage_super_admin_settings? %>
+          <div class="setting-item mt-8 pt-6 border-t border-borderPrimary">
+            <%= f.label :custom_header_html, "Custom Header HTML", class: "block text-sm font-medium text-contentSecondary mb-2" %>
+
+            <div class="flex items-start space-x-4">
+              <div class="flex-1">
+                <%= f.text_area :custom_header_html,
+                  value: @custom_header_html,
+                  placeholder: "Insert custom HTML (e.g., analytics scripts, tracking codes)",
+                  rows: 6,
+                  class: "input-textarea font-mono" %>
+
+                <div class="mt-2 text-sm text-contentSecondary">
+                  <span class="flex items-start">
+                    <span class="icon icon-sm icon-info mr-1 mt-0.5 text-contentPrimary"></span>
+                    <span>This HTML will be injected into the &lt;head&gt; section of all pages. Useful for analytics scripts (e.g. Google Analytics), custom meta tags, or other tracking codes.</span>
+                  </span>
+                </div>
+              </div>
+
+              <div class="shrink-0 px-4 py-2 bg-backgroundSecondary rounded-lg">
+                <div class="text-xs text-contentTertiary uppercase tracking-wide mb-1">Status</div>
+                <div class="text-sm font-bold <%= @custom_header_html.present? ? 'text-lime-400' : 'text-contentTertiary' %>">
+                  <%= @custom_header_html.present? ? "Configured" : "Not Set" %>
+                </div>
+              </div>
+            </div>
+
+            <div class="mt-3 p-3 bg-yellow-950/20 border border-yellow-400/30 rounded-md">
+              <div class="flex">
+                <span class="icon icon-md icon-warning-circle text-yellow-400 mr-2"></span>
+                <div class="text-sm text-contentSecondary">
+                  <ul class="list-disc list-inside space-y-1">
+                    <li>Ensure HTML is from trusted sources only</li>
+                    <li>Invalid HTML may break page rendering</li>
+                    <li>Scripts will execute on every page load</li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+          </div>
+        <% end %>
+      </div>
+
+        <div class="mt-8">
+          <div class="flex items-center justify-end">
+            <%= button_tag "Save Settings", type: "submit", class: "btn-base btn-base-size btn-default-primary" %>
+          </div>
+        </div>
+      </div>
+    </div>
+  <% end %>
+</div>

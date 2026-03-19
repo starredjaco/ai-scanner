@@ -1,0 +1,11 @@
+<%# Datetime cell - formatted date and time display %>
+<% format = column[:format] || :datetime %>
+
+<% if value.present? %>
+  <div class="text-sm">
+    <div class="text-gray-900 dark:text-gray-100"><%= value.strftime("%Y-%m-%d") %></div>
+    <div class="text-gray-500 dark:text-gray-400 text-xs"><%= value.strftime("%H:%M:%S") %></div>
+  </div>
+<% else %>
+  <span class="text-sm text-gray-500 dark:text-gray-400">—</span>
+<% end %>

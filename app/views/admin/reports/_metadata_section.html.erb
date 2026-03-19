@@ -1,0 +1,75 @@
+<div class="bg-zinc-900 rounded-lg border border-zinc-700 overflow-hidden">
+  <button
+    class="w-full px-4 py-3 flex items-center justify-between cursor-pointer hover:bg-zinc-800/50 transition-colors duration-200"
+    data-action="click->report-redesigned#toggleMetadata">
+    <h2 class="text-xl font-sans font-semibold text-primary tracking-wide">
+      Metadata
+    </h2>
+    <span
+      data-target="metadata-chevron"
+      class="icon icon-sm icon-chevron-down text-zinc-400 transition-transform duration-200 rotate-180"></span>
+  </button>
+
+  <div data-target="metadata-content" class="px-4 pb-4">
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-2 mt-3">
+      <%# Left Column %>
+      <div class="space-y-2">
+        <div class="flex items-center gap-2">
+          <span class="text-contentSecondary font-sans text-sm min-w-[50px]">ID:</span>
+          <span class="text-white font-sans text-sm"><%= report.id %></span>
+        </div>
+
+        <div class="flex items-center gap-2">
+          <span class="text-contentSecondary font-sans text-sm min-w-[50px]">UUID:</span>
+          <% if report.completed? %>
+            <%= link_to report.uuid, report_detail_path(report),
+                class: "text-primary hover:text-primary/80 font-sans text-sm no-underline transition-colors truncate",
+                target: "_blank" %>
+          <% else %>
+            <span class="text-white font-sans text-sm truncate"><%= report.uuid %></span>
+          <% end %>
+        </div>
+
+        <div class="flex items-center gap-2">
+          <span class="text-contentSecondary font-sans text-sm min-w-[50px]">Name:</span>
+          <span class="text-white font-sans text-sm truncate"><%= report.name %></span>
+        </div>
+      </div>
+
+      <%# Right Column %>
+      <div class="space-y-2">
+        <div class="flex items-center gap-2">
+          <span class="text-contentSecondary font-sans text-sm min-w-[50px]">Target:</span>
+          <% if report.target %>
+            <%= link_to report.target.name, target_path(report.target),
+                class: "text-primary hover:text-primary/80 font-sans text-sm no-underline transition-colors truncate",
+                target: "_blank" %>
+          <% else %>
+            <span class="text-zinc-500 font-sans text-sm italic">Deleted</span>
+          <% end %>
+        </div>
+
+        <div class="flex items-center gap-2">
+          <span class="text-contentSecondary font-sans text-sm min-w-[50px]">Scan:</span>
+          <% if report.scan %>
+            <%= link_to report.scan.name, scan_path(report.scan),
+                class: "text-primary hover:text-primary/80 font-sans text-sm no-underline transition-colors truncate",
+                target: "_blank" %>
+          <% else %>
+            <span class="text-zinc-500 font-sans text-sm italic">Deleted Scan</span>
+          <% end %>
+        </div>
+
+        <div class="flex items-center gap-2">
+          <span class="text-contentSecondary font-sans text-sm min-w-[50px]">Status:</span>
+          <div class="flex items-center gap-2">
+            <%= status_tag(report.status) %>
+            <% if report.interrupted? && report.retry_count > 0 %>
+              <span class="text-xs text-contentTertiary">(retry <%= report.retry_count %>/<%= CheckStaleReportsJob::MAX_INTERRUPT_RETRIES %>)</span>
+            <% end %>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

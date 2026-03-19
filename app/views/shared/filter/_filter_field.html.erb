@@ -1,0 +1,35 @@
+<%#
+  Filter Field Dispatcher
+
+  Renders the appropriate filter field type based on filter configuration.
+
+  filter: {
+    key: :name,           # Field key (used for Ransack param)
+    label: "Name",        # Display label
+    type: :text,          # Field type (:text, :select, :association, :date_range)
+    collection: [...],    # For :select/:association - array of [label, value] pairs
+    placeholder: "...",   # Optional placeholder text
+    include_blank: true   # For select, whether to include blank option
+  }
+%>
+
+<% filter ||= {} %>
+<% ransack ||= nil %>
+
+<% field_type = filter[:type] || :text %>
+
+<div class="filter-field <%= 'col-span-2' if field_type == :date_range %>">
+  <% case field_type %>
+  <% when :text %>
+    <%= render "shared/filter/fields/text", filter: filter, ransack: ransack %>
+  <% when :select %>
+    <%= render "shared/filter/fields/select", filter: filter, ransack: ransack %>
+  <% when :association %>
+    <%= render "shared/filter/fields/association", filter: filter, ransack: ransack %>
+  <% when :date_range %>
+    <%= render "shared/filter/fields/date_range", filter: filter, ransack: ransack %>
+  <% else %>
+    <%# Fallback to text %>
+    <%= render "shared/filter/fields/text", filter: filter, ransack: ransack %>
+  <% end %>
+</div>

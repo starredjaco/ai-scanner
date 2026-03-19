@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <title><%= content_for(:title) || "Scanner" %></title>
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="mobile-web-app-capable" content="yes">
+    <%= csrf_meta_tags %>
+    <%= csp_meta_tag %>
+    <%= action_cable_meta_tag %>
+
+    <meta name="brand-font" content="<%= BrandConfig.font_family %>">
+    <%= yield :head %>
+
+    <%# Enable PWA manifest for installable apps (make sure to enable in config/routes.rb too!) %>
+    <%#= tag.link rel: "manifest", href: pwa_manifest_path(format: :json) %>
+
+    <link rel="icon" href="/icon.ico" type="image/png">
+
+    <%= javascript_importmap_tags %>
+    <%= stylesheet_link_tag "application", "data-turbo-track": "reload" %>
+    <%= render "layouts/partials/brand_fonts" if lookup_context.exists?("layouts/partials/_brand_fonts") %>
+    <style>:root { --brand-font-family: <%= BrandConfig.font_family %>; }</style>
+    <% if SettingsService.custom_header_html.present? %>
+      <%= raw SettingsService.custom_header_html %>
+    <% end %>
+    <%= render "shared/clarity" %>
+  </head>
+
+  <body>
+    <%= yield %>
+  </body>
+</html>

@@ -1,0 +1,21 @@
+<%#
+  Custom Turbo Frame layout for admin pages.
+
+  This layout is used when responding to Turbo Frame requests.
+  It wraps the content in a turbo-frame tag matching the requesting frame ID,
+  allowing Turbo to extract and replace only the frame content.
+
+  The data-turbo-action="advance" ensures browser history is updated.
+%>
+<%= turbo_frame_tag turbo_frame_request_id, data: { turbo_action: "advance" } do %>
+  <%= render "layouts/partials/page_header", title: @page_title || page_title %>
+  <%= render "layouts/partials/flash_messages" %>
+  <div data-test-page-content class="px-2.5 lg:px-5 grow">
+    <div class="min-h-0 flex gap-6">
+      <div class="flex-1 min-w-0">
+        <%= yield %>
+      </div>
+      <%= render "layouts/partials/sidebar" %>
+    </div>
+  </div>
+<% end %>

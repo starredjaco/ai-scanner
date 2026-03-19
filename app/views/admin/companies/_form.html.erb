@@ -1,0 +1,51 @@
+<%= form_with model: company, url: company.persisted? ? company_path(company) : companies_path, local: true, class: "space-y-6" do |f| %>
+  <% if company.errors.any? %>
+    <div class="bg-red-950/20 border border-red-400/30 rounded-lg p-4">
+      <div class="flex">
+        <span class="icon icon-md icon-x-circle text-red-400 mr-2 shrink-0"></span>
+        <div>
+          <h3 class="text-sm font-medium text-contentPrimary">
+            <%= pluralize(company.errors.count, "error") %> prohibited this company from being saved:
+          </h3>
+          <ul class="mt-2 text-sm text-contentSecondary list-disc list-inside">
+            <% company.errors.full_messages.each do |message| %>
+              <li><%= message %></li>
+            <% end %>
+          </ul>
+        </div>
+      </div>
+    </div>
+  <% end %>
+
+  <div class="rounded-lg bg-backgroundPrimary border border-borderPrimary">
+    <div class="p-6 space-y-6">
+      <h3 class="text-xl font-sans font-semibold text-primary tracking-wide mb-4">
+        Company Information
+      </h3>
+
+      <div>
+        <%= f.label :name, class: "block text-sm font-medium text-contentSecondary mb-2" %>
+        <%= f.text_field :name,
+            required: true,
+            placeholder: "Company name",
+            class: "input-base" %>
+      </div>
+
+      <div>
+        <%= f.label :tier, class: "block text-sm font-medium text-contentSecondary mb-2" %>
+        <%= f.select :tier,
+            Company.tiers.keys.map { |k| [k.titleize, k] },
+            { include_blank: false },
+            { class: "input-select" } %>
+      </div>
+
+      <div class="flex items-center justify-end gap-3 pt-4">
+        <%= link_to "Cancel",
+            company.new_record? ? companies_path : company_path(company),
+            class: "btn-base btn-base-size btn-default-gray" %>
+        <%= button_tag company.new_record? ? "Create Company" : "Update Company",
+            type: "submit", class: "btn-base btn-base-size btn-default-primary" %>
+      </div>
+    </div>
+  </div>
+<% end %>

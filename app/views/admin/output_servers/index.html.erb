@@ -1,0 +1,102 @@
+<%
+  # Build action buttons for the header
+  action_buttons = [{
+    label: "New Integration",
+    path: new_output_server_path,
+    variant: :default,
+    color: :primary,
+    size: :base
+  }]
+%>
+
+<%= render partial: "admin/shared/table_header", locals: { title: "Integrations", current_page: :index, action_buttons: action_buttons } %>
+
+<%# Card wrapper for filter panel and table %>
+<div class="rounded-lg bg-backgroundPrimary border border-borderPrimary overflow-hidden">
+  <%# Filter Panel %>
+  <%
+    filters = [
+      { key: :name, label: "Name", type: :text, placeholder: "Search by name..." },
+      { key: :server_type, label: "Server Type", type: :select, collection: @filter_server_types },
+      { key: :host, label: "Host", type: :text, placeholder: "Search by host..." },
+      { key: :protocol, label: "Protocol", type: :select, collection: @filter_protocols },
+      { key: :enabled, label: "Enabled", type: :select, collection: @filter_enabled }
+    ]
+  %>
+  <%= render "shared/filter/filter_panel",
+      ransack: @q,
+      filters: filters,
+      form_url: output_servers_path %>
+
+<%
+  columns = [
+    {
+      key: :name,
+      label: "Name",
+      type: :link,
+      link_path: ->(server) { output_server_path(server) },
+      link_class: "text-primary hover:underline",
+      sortable: true
+    },
+    {
+      key: :server_type,
+      label: "Server Type",
+      type: :text,
+      sortable: true,
+      value: ->(server) { server.server_type&.humanize }
+    },
+    {
+      key: :host,
+      label: "Host",
+      type: :code,
+      sortable: true
+    },
+    {
+      key: :port,
+      label: "Port",
+      type: :number,
+      sortable: true
+    },
+    {
+      key: :protocol,
+      label: "Protocol",
+      type: :badge,
+      sortable: true,
+      badge_color: ->(server) { server.protocol == "https" ? :completed : :running }
+    },
+    {
+      key: :enabled,
+      label: "Enabled",
+      type: :status_tag,
+      sortable: true
+    },
+    {
+      key: :actions,
+      label: "Actions",
+      type: :custom,
+      align: :right,
+      render: ->(server) {
+        content_tag(:div, class: "flex items-center justify-end gap-3") do
+          safe_join([
+            link_to(edit_output_server_path(server), class: "text-actionButton hover:text-textMuted transition-colors", title: "Edit") do
+              content_tag(:span, "", class: "icon icon-sm icon-edit")
+            end,
+            button_to(output_server_path(server), method: :delete, data: { turbo_confirm: "Are you sure you want to delete this integration?" }, class: "text-actionButton hover:text-textMuted transition-colors cursor-pointer", title: "Delete", form: { class: "inline-flex items-center" }) do
+              content_tag(:span, "", class: "icon icon-sm icon-trash")
+            end
+          ])
+        end
+      }
+    }
+  ]
+%>
+
+  <%= render "shared/table/table",
+      collection: @output_servers,
+      columns: columns,
+      ransack: @q,
+      pagy: @pagy,
+      empty_message: "No integrations found",
+      empty_action: { label: "Create Integration", path: new_output_server_path }
+  %>
+</div>

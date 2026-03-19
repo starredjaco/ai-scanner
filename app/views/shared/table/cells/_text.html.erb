@@ -1,0 +1,4 @@
+<%# Text cell - plain text display %>
+<span class="text-sm text-gray-900 dark:text-gray-100 <%= column[:truncate] ? 'truncate max-w-xs block' : '' %>">
+  <%= value || column[:default] || "—" %>
+</span>

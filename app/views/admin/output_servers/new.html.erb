@@ -1,0 +1,22 @@
+<%
+  action_buttons = [{
+    label: "Back to Integrations",
+    path: output_servers_path,
+    variant: :default,
+    color: :gray,
+    size: :base,
+    icon: "icon-arrow-left"
+  }]
+%>
+<%= render partial: "admin/shared/show_header", locals: { title: "New Integration", action_buttons: action_buttons } %>
+
+<div class="py-6" id="admin-content">
+  <div class="flex flex-wrap -mx-4 max-w-full overflow-x-auto">
+    <div class="w-full md:w-1/2 px-4 min-w-0">
+      <%= render 'form', output_server: @output_server %>
+    </div>
+    <div class="w-full md:w-1/2 px-4 min-w-0">
+      <%= render 'help_panel' %>
+    </div>
+  </div>
+</div>

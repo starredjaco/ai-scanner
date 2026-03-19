@@ -1,0 +1,29 @@
+<% # Locals: attributes (array of hashes with label, value, type (optional)) %>
+<% attributes = local_assigns[:attributes] || [] %>
+
+<div class="panel">
+  <table class="attributes-table">
+    <tbody>
+      <% attributes.each do |attr| %>
+        <tr class="row">
+          <th class="row-header"><%= attr[:label].to_s.upcase %></th>
+          <td class="row-value">
+            <% value = attr[:value] %>
+            <% type = attr[:type] || :text %>
+            <% if value.blank? %>
+              <span class="empty">—</span>
+            <% elsif type == :status %>
+              <%= value %>
+            <% elsif type == :link %>
+              <%= value %>
+            <% elsif type == :code %>
+              <pre class="json-config"><%= value %></pre>
+            <% else %>
+              <%= value %>
+            <% end %>
+          </td>
+        </tr>
+      <% end %>
+    </tbody>
+  </table>
+</div>

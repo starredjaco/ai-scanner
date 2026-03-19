@@ -1,0 +1,34 @@
+<!doctype html>
+<html lang="<%= I18n.locale %>" class="h-full dark">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Sign In - Scanner</title>
+  <%= csrf_meta_tags %>
+  <%= csp_meta_tag %>
+
+  <%= stylesheet_link_tag "application", "data-turbo-track": "reload" %>
+  <%= render "layouts/partials/brand_fonts" if lookup_context.exists?("layouts/partials/_brand_fonts") %>
+  <style>:root { --brand-font-family: <%= BrandConfig.font_family %>; }</style>
+  <%= javascript_importmap_tags %>
+  <%= render "shared/clarity" %>
+</head>
+<body class="bg-backgroundPrimary text-contentPrimary antialiased flex flex-col min-h-screen" data-turbo="false">
+  <div class="flex-1 flex items-center justify-center px-4 sm:px-6 lg:px-8">
+    <div class="max-w-md w-full">
+      <!-- Logo and Title -->
+      <div class="flex items-center justify-center gap-1 mb-8">
+        <%= render "layouts/partials/brand_logo" %>
+      </div>
+
+      <!-- Flash Messages -->
+      <%= render "layouts/partials/flash_messages", dismissible: false, wrapper_classes: "" %>
+
+      <!-- Main Content Card -->
+      <div class="bg-backgroundSecondary rounded-lg shadow-xl border border-borderPrimary p-8">
+        <%= yield %>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

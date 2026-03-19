@@ -1,0 +1,15 @@
+<div class="bg-white dark:bg-zinc-900 rounded-lg shadow-sm border border-gray-100 dark:border-zinc-700 p-3 lg:p-4 flex flex-col">
+  <div class="flex items-center gap-2 mb-3">
+    <h3 class="text-white font-sans text-base font-normal">
+      <%= link_to "Total Probes", probes_path, class: "text-white hover:text-primary transition-colors" %>
+    </h3>
+    <%= render 'shared/info_tooltip', aria_label: 'Information about Total Probes', content: t('dashboard.tooltips.total_probes') %>
+  </div>
+  <div class="flex items-center justify-between flex-grow">
+    <div class="flex items-end gap-2">
+      <span data-dashboard-target="totalHits1" class="stat-value"></span>
+      <span data-dashboard-target="percentage1" class="font-mono text-sm mb-1"></span>
+    </div>
+    <div data-dashboard-target="sparklineChart1" class="w-16 h-8 sm:w-20 sm:h-10 shrink-0" aria-label="Total Probes trend chart"></div>
+  </div>
+</div>

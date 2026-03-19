@@ -1,0 +1,42 @@
+default: &default
+  browser: firefox
+  headless: true
+  timeout: 30000
+  screenshot_path: <%= Rails.root.join('storage', 'screenshots') %>
+  viewport:
+    width: 1920
+    height: 1080
+  launch_options:
+    firefox_user_prefs:
+      security.sandbox.content.level: 0
+      security.sandbox.gpu.level: 0
+      security.sandbox.rdd.level: 0
+      security.sandbox.socket.process.level: 0
+      security.sandbox.utility.level: 0
+  wait_options:
+    wait_until: networkidle
+    timeout: 30000
+  
+development:
+  <<: *default
+  headless: true
+  devtools: false
+  screenshot_path: <%= Rails.root.join('storage', 'screenshots', 'development') %>
+  
+test:
+  <<: *default
+  headless: true
+  screenshot_path: <%= Rails.root.join('tmp', 'screenshots') %>
+  timeout: 10000
+  
+production:
+  <<: *default
+  headless: true
+  screenshot_path: <%= Rails.root.join('storage', 'screenshots', 'production') %>
+  launch_options:
+    firefox_user_prefs:
+      security.sandbox.content.level: 0
+      security.sandbox.gpu.level: 0
+      security.sandbox.rdd.level: 0
+      security.sandbox.socket.process.level: 0
+      security.sandbox.utility.level: 0

@@ -1,0 +1,80 @@
+<%# Mobile backdrop (invisible click target) %>
+<div data-mobile-nav-target="backdrop"
+     data-action="click->mobile-nav#close"
+     class="fixed top-16 xl:top-0 bottom-0 left-0 right-0 z-30 xl:hidden"
+     aria-hidden="true"></div>
+
+<div id="main-menu"
+     data-mobile-nav-target="drawer"
+     data-controller="nav-active"
+     class="fixed top-16 xl:top-0 bottom-0 start-0 z-40 w-64 xl:w-56 pt-4 pr-3 pb-4 pl-2 xl:pl-3 overflow-y-auto transition-transform duration-200 -translate-x-full xl:translate-x-0 bg-zinc-800 flex flex-col"
+     tabindex="-1">
+  <div class="hidden xl:flex items-center gap-1 pt-4 pb-6 px-2">
+    <%= render "layouts/partials/brand_logo" %>
+  </div>
+
+  <%# Company Switcher - only shown for users with multiple companies %>
+  <%= render "layouts/partials/company_switcher" %>
+
+  <ul role="list" class="flex-1 flex flex-col space-y-0.5 overflow-y-auto">
+    <% current_menu.items(self).each do |item| %>
+      <% children = item.items(self).presence %>
+      <% has_active_child = children&.any? { |child| current_menu_item?(child) } %>
+      <li <% if current_menu_item?(item) || has_active_child %>data-open<% end %> class="group relative ml-2" data-item-id="<%= item.id %>">
+        <% if children %>
+          <button data-action="click->mobile-nav#toggleSubmenu" class="nav-item-hover text-white hover:text-primary flex items-center w-full rounded-lg py-2 px-2 gap-2 text-sm font-sans font-normal leading-5 hover:bg-zinc-900 cursor-pointer" aria-label="Toggle <%= item.label(self) %>">
+            <% if item.icon.present? %>
+              <%= image_tag item.icon, class: "h-5 w-5 nav-item-icon flex-shrink-0", alt: "" %>
+            <% end %>
+            <%= item.label(self) %>
+            <span class="icon icon-md icon-chevron-right group-data-[open]:rotate-90 group-data-[open]:rtl:-rotate-90 ms-auto shrink-0 rtl:-scale-x-100"></span>
+          </button>
+          <ul role="list" class="mt-1 space-y-0.5 hidden group-data-[open]:block ps-6">
+            <% children.each do |j| %>
+              <% is_child_current = current_menu_item?(j) %>
+              <li class="relative ml-2" data-item-id="<%= j.id %>">
+                <%= link_to j.label(self), j.url(self), j.html_options.merge(
+                  class: "block rounded-lg py-2 px-2 text-sm font-sans font-normal leading-5 no-underline transition-colors #{is_child_current ? "bg-zinc-900/40 text-primary" : "text-white hover:text-primary hover:bg-zinc-900"}",
+                  data: { turbo_frame: "_top", nav_active_target: "item", action: "click->mobile-nav#close" }
+                ) %>
+              </li>
+            <% end %>
+          </ul>
+        <% elsif url = item.url(self) %>
+          <% is_current = current_menu_item?(item) %>
+          <%= link_to url, item.html_options.merge(
+            class: "nav-item-hover flex items-center w-full rounded-lg py-2 px-2 gap-2 text-sm font-sans font-normal leading-5 no-underline transition-colors #{is_current ? "bg-zinc-900/40 text-primary" : "text-white hover:text-primary hover:bg-zinc-900"}",
+            data: { turbo_frame: "_top", nav_active_target: "item", action: "click->mobile-nav#close" }
+          ) do %>
+            <% if item.icon.present? %>
+              <%= image_tag item.icon, class: "h-5 w-5 nav-item-icon flex-shrink-0 #{is_current ? 'nav-icon-active' : ''}", alt: "" %>
+            <% end %>
+            <%= item.label(self) %>
+          <% end %>
+        <% else %>
+          <%= item.label(self) %>
+        <% end %>
+      </li>
+    <% end %>
+  </ul>
+  <div class="mt-auto pt-4">
+    <% if current_user %>
+      <%# Subscribe to company-specific stream for running stats %>
+      <%= turbo_stream_from "system-status:company_#{current_user.current_company_id}" %>
+      <% if current_user.super_admin? %>
+        <%# Super admins also subscribe to global stats stream %>
+        <%= turbo_stream_from "system-status:global" %>
+      <% end %>
+      <%= render 'application/system_status', company_id: current_user.current_company_id, is_super_admin: current_user.super_admin? %>
+    <% else %>
+      <%= render 'application/system_status' %>
+    <% end %>
+
+    <div class="mt-4 pt-4 border-t border-borderPrimary">
+      <%= button_to destroy_user_session_path, method: :delete, form: { data: { turbo_confirm: "Are you sure you want to logout?" } }, class: "flex items-center w-full rounded-md p-2 gap-x-2 text-sm text-contentSecondary hover:text-red-500 hover:bg-red-900/20 transition-all duration-200 no-underline" do %>
+        <span class="icon icon-md icon-logout"></span>
+        <span>Logout</span>
+      <% end %>
+    </div>
+  </div>
+</div>

@@ -1,0 +1,7 @@
+<div class="text-sm text-center mt-auto mx-8 pt-9 pb-12 text-gray-500">
+  <% if BrandConfig.powered_by %>POWERED BY <%= BrandConfig.powered_by %> | <% end %><%= link_to Rails.application.config.version, release_notes_path, class: "text-orange-400 " %>
+</div>
+
+<%= turbo_stream_from "toast-notifications:company_#{current_user.current_company_id}" %>
+<div id="toast-notifications" class="fixed bottom-4 right-4 z-50 flex flex-col gap-3">
+</div>

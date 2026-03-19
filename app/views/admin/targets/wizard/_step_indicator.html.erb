@@ -1,0 +1,25 @@
+<div class="flex items-center justify-center mb-8">
+  <% [
+    { step: 1, label: "Choose Provider", icon: "icon-lightning" },
+    { step: 2, label: "Configure", icon: "icon-cog" },
+    { step: 3, label: "Review & Create", icon: "icon-check" }
+  ].each_with_index do |item, index| %>
+    <div class="flex items-center" data-target-wizard-target="indicator" data-step="<%= item[:step] %>">
+      <button type="button"
+              class="flex items-center gap-2 cursor-pointer focus:outline-none"
+              data-action="click->target-wizard#goToStepFromIndicator"
+              data-step="<%= item[:step] %>">
+        <div class="w-10 h-10 rounded-full flex items-center justify-center border-2 transition-colors duration-200 border-borderPrimary text-contentTertiary"
+             data-target-wizard-target="indicatorCircle">
+          <span class="icon icon-md <%= item[:icon] %>"></span>
+        </div>
+        <span class="text-sm font-medium text-contentTertiary hidden sm:inline transition-colors duration-200"
+              data-target-wizard-target="indicatorLabel"><%= item[:label] %></span>
+      </button>
+      <% unless index == 2 %>
+        <div class="w-8 sm:w-16 h-0.5 mx-3 bg-borderPrimary transition-colors duration-200"
+             data-target-wizard-target="indicatorLine"></div>
+      <% end %>
+    </div>
+  <% end %>
+</div>

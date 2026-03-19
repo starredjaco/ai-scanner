@@ -1,0 +1,8 @@
+<div class="relative flex-shrink-0" data-controller="tooltip">
+  <button type="button" class="flex-shrink-0" aria-label="<%= aria_label %>" data-action="mouseenter->tooltip#show mouseleave->tooltip#hide">
+    <span class="icon icon-sm icon-info text-zinc-300"></span>
+  </button>
+  <div class="hidden absolute left-0 top-full mt-2 w-64 bg-[#27272A] rounded-xl shadow-lg z-50 p-3" data-tooltip-target="popup" data-action="click->tooltip#stopPropagation">
+    <p class="text-zinc-400 font-sans text-xs leading-relaxed"><%= content %></p>
+  </div>
+</div>

@@ -1,0 +1,29 @@
+{
+  "ignored_warnings": [
+    {
+      "warning_type": "File Access",
+      "warning_code": 16,
+      "fingerprint": "00801ec8c2d369aa7c758f954543a2690a3f3744cc381399cabdc03880521ca0",
+      "check_name": "SendFile",
+      "message": "Model attribute used in file name",
+      "file": "app/controllers/report_details_controller.rb",
+      "line": 16,
+      "link": "https://brakemanscanner.org/docs/warning_types/file_access/",
+      "code": "send_file(ReportDecorator.new(Report.find(params[:id])).report_pdf.file_path, :filename => pdf_filename, :type => \"application/pdf\", :disposition => \"attachment\")",
+      "render_path": null,
+      "location": {
+        "type": "method",
+        "class": "ReportDetailsController",
+        "method": "pdf"
+      },
+      "user_input": "Report.find(params[:id])",
+      "confidence": "Weak",
+      "cwe_id": [
+        22
+      ],
+      "note": "file_path is set by GeneratePdfJob, not user input. The path format is storage/pdfs/report_{report.id}.pdf and cannot be manipulated by users."
+    }
+  ],
+  "updated": "2026-02-20 19:42:55 +0000",
+  "brakeman_version": "8.0.2"
+}

@@ -1,0 +1,33 @@
+<%# Scopes component for admin index pages %>
+<% if defined?(scopes) && scopes.present? %>
+  <div class="scopes-container mb-6">
+    <div class="flex flex-wrap gap-2">
+      <% scopes.each do |scope| %>
+        <%
+          is_active = (params[:scope] == scope[:name].to_s) || (params[:scope].nil? && scope[:default])
+          scope_class = if is_active
+            "bg-orange-600 text-white border-orange-600"
+          else
+            "bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700"
+          end
+        %>
+
+        <%= link_to scope_path(scope[:name]),
+            class: "inline-flex items-center gap-2 px-4 py-2 rounded-lg border-2 transition-colors #{scope_class}" do %>
+          <span class="font-medium"><%= scope[:label] %></span>
+          <% if scope[:count].present? %>
+            <span class="<%= is_active ? 'bg-orange-700' : 'bg-gray-100 dark:bg-gray-700' %> px-2 py-0.5 rounded-full text-xs font-semibold">
+              <%= scope_with_formatted_count('', scope[:count]) %>
+            </span>
+          <% end %>
+        <% end %>
+      <% end %>
+    </div>
+  </div>
+<% end %>
+
+<style>
+  .scopes-count {
+    display: inline-block;
+  }
+</style>

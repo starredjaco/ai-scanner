@@ -1,0 +1,36 @@
+<%= form_for [:admin, metadatum], html: { class: "formtastic metadatum" } do |f| %>
+  <% if metadatum.errors.any? %>
+    <div class="flash flash_error">
+      <ul>
+        <% metadatum.errors.full_messages.each do |message| %>
+          <li><%= message %></li>
+        <% end %>
+      </ul>
+    </div>
+  <% end %>
+
+  <fieldset class="inputs">
+    <ol>
+      <li class="string input required stringish" id="metadatum_key_input">
+        <%= f.label :key, "Key", class: "label" %>
+        <%= f.text_field :key, required: true %>
+      </li>
+
+      <li class="text input optional stringish" id="metadatum_value_input">
+        <%= f.label :value, "Value", class: "label" %>
+        <%= f.text_area :value, rows: 5 %>
+      </li>
+    </ol>
+  </fieldset>
+
+  <fieldset class="actions">
+    <ol>
+      <li class="action input_action">
+        <%= f.submit metadatum.new_record? ? "Create Metadata" : "Update Metadata", class: "button" %>
+      </li>
+      <li class="cancel">
+        <%= link_to "Cancel", metadatum.new_record? ? metadata_path : metadatum_path(metadatum) %>
+      </li>
+    </ol>
+  </fieldset>
+<% end %>

@@ -1,0 +1,2 @@
+# Python Playwright pinned to match Node Playwright
+playwright==1.57.0

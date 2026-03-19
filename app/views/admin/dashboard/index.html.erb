@@ -1,0 +1,33 @@
+<div class="" data-controller="dashboard">
+  <div class="flex justify-end items-center mb-4 sm:mb-6">
+    <div class="flex items-center gap-3">
+      <span class="text-white font-sans text-sm font-normal leading-5">TIMEFRAME</span>
+      <%= render partial: "admin/dashboard/period_select", locals: {
+        target: "globalPeriod",
+        action: "changeGlobalPeriod",
+        selected: "30"
+      } %>
+    </div>
+  </div>
+
+  <div class="grid gap-4">
+    <div class="grid gap-4 grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 auto-rows-fr">
+      <%= render "admin/dashboard/total_probes_card" %>
+      <%= render "admin/dashboard/scans_quota_card" %>
+      <%= render "admin/dashboard/average_asr_card" %>
+      <%= render "admin/dashboard/average_scan_time_card" %>
+    </div>
+
+    <div class="grid gap-4 grid-cols-1 lg:grid-cols-3">
+      <%= render "admin/dashboard/last_five_scans_card" %>
+      <%= render "admin/dashboard/vulnerable_targets_card" %>
+      <%= render "admin/dashboard/detector_activity_card" %>
+    </div>
+
+    <div class="grid gap-4 grid-cols-1 md:grid-cols-2 xl:grid-cols-3">
+      <%= render "admin/dashboard/taxonomy_distribution_card" %>
+      <%= render "admin/dashboard/probe_disclosure_card" %>
+      <%= render "admin/dashboard/scans_targets_time_card" %>
+    </div>
+  </div>
+</div>

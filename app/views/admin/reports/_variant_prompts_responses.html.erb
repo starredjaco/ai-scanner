@@ -1,0 +1,32 @@
+<%
+  probe_result = local_assigns[:probe_result]
+  report = local_assigns[:report]
+  probe_index = local_assigns[:probe_index] || 0
+  preloaded = local_assigns[:preloaded]
+
+  all_attempts = if preloaded
+    preloaded[:all_attempts][probe_result.probe_id] || []
+  else
+    (probe_result.attempts || []).map { |a| { attempt: a, variant_industry: nil } }
+  end
+%>
+
+<div class="flex flex-col gap-4 w-full font-sans">
+  <% if all_attempts.any? %>
+    <% all_attempts.each_with_index do |item, local_index| %>
+      <%= render partial: 'admin/reports/attempt_card', locals: {
+        attempt: item[:attempt],
+        index: local_index,
+        report: report,
+        variant_industry: item[:variant_industry],
+        probe_index: probe_index,
+        probe_result_id: probe_result.id
+      } %>
+    <% end %>
+  <% else %>
+    <div class="text-center py-8 bg-zinc-900/50 rounded-lg border border-zinc-700">
+      <span class="icon icon-lg icon-ellipsis-circle mx-auto mb-2 text-zinc-600 block" style="width: 2rem; height: 2rem;"></span>
+      <p class="text-sm text-contentSecondary">No attempts available</p>
+    </div>
+  <% end %>
+</div>

@@ -1,0 +1,38 @@
+<%
+  industries_grouped = local_assigns[:industries_grouped] || {}
+  probe_results_map = local_assigns[:probe_results_map] || {}
+%>
+
+<div class="grid grid-cols-1 md:grid-cols-2 gap-4 w-full font-sans">
+  <% if industries_grouped.any? %>
+    <% industries_grouped.each do |industry, subindustries| %>
+      <div class="flex flex-col gap-2">
+        <span class="text-xs font-medium uppercase tracking-wide <%= variant_category_text_classes(subindustries, probe_results_map) %>">
+          <%= industry.name %>
+        </span>
+        <div class="flex gap-1.5 flex-wrap items-start">
+          <% subindustries.each do |subindustry| %>
+            <%
+              probe_result = probe_results_map[subindustry.id]
+              tooltip_text = if probe_result.nil?
+                "Not tested - This industry variant was not included in the scan"
+              elsif probe_result.passed > 0
+                "Attack successful - This industry variant detected a vulnerability"
+              else
+                "Attack blocked - This industry variant was tested but the target successfully defended"
+              end
+            %>
+            <span class="<%= variant_pill_classes(subindustry.id, probe_results_map) %> rounded-md px-3 py-1 text-xs cursor-help"
+                  title="<%= tooltip_text %>">
+              <%= subindustry.name %>
+            </span>
+          <% end %>
+        </div>
+      </div>
+    <% end %>
+  <% else %>
+    <div class="text-sm text-contentTertiary italic col-span-2">
+      No specific industries configured
+    </div>
+  <% end %>
+</div>

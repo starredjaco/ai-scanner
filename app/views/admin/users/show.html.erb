@@ -1,0 +1,74 @@
+<%
+  action_buttons = []
+  # Impersonate button (super_admin only, not for super_admins or self)
+  if policy(@user).impersonate?
+    action_buttons << {
+      label: "Login as User",
+      path: impersonation_path(id: @user.id),
+      method: :post,
+      data: { turbo_frame: "_top" },
+      variant: :default, color: :primary, size: :base
+    }
+  end
+
+  if policy(@user).update?
+    action_buttons << { label: "Edit", path: edit_user_path(@user), variant: :default, color: :gray, size: :base, icon: "icon-edit" }
+  end
+
+  if policy(@user).destroy?
+    action_buttons << {
+      label: "Delete",
+      path: user_path(@user),
+      method: :delete,
+      data: { turbo_confirm: "Are you sure you want to delete this user?" },
+      variant: :default,
+      color: :gray,
+      size: :base,
+      icon: "icon-trash"
+    }
+  end
+%>
+<%= render partial: "admin/shared/show_header", locals: { title: "User: #{@user.email}", action_buttons: action_buttons } %>
+
+<div class="py-6">
+  <div class="rounded-lg bg-backgroundPrimary border border-borderPrimary p-6">
+    <table class="w-full">
+      <tbody class="divide-y divide-borderPrimary">
+        <tr>
+          <th class="py-3 pr-4 text-left text-sm font-medium text-contentSecondary w-1/4">ID</th>
+          <td class="py-3 text-sm text-contentPrimary"><%= @user.id %></td>
+        </tr>
+        <tr>
+          <th class="py-3 pr-4 text-left text-sm font-medium text-contentSecondary w-1/4">Email</th>
+          <td class="py-3 text-sm text-contentPrimary"><%= @user.email %></td>
+        </tr>
+        <% if policy(User).see_company_column? && @user.company %>
+          <tr>
+            <th class="py-3 pr-4 text-left text-sm font-medium text-contentSecondary w-1/4">Company</th>
+            <td class="py-3 text-sm text-contentPrimary">
+              <%= company_link_with_tier(@user.company) %>
+            </td>
+          </tr>
+        <% end %>
+        <% if policy(User).see_super_admin_column? %>
+          <tr>
+            <th class="py-3 pr-4 text-left text-sm font-medium text-contentSecondary w-1/4">Super Admin</th>
+            <td class="py-3 text-sm text-contentPrimary"><%= status_tag(@user.super_admin? ? "Yes" : "No", @user.super_admin? ? :ok : nil) %></td>
+          </tr>
+        <% end %>
+        <tr>
+          <th class="py-3 pr-4 text-left text-sm font-medium text-contentSecondary w-1/4">Time Zone</th>
+          <td class="py-3 text-sm text-contentPrimary"><%= @user.time_zone.presence || content_tag(:span, "—", class: "text-contentTertiary") %></td>
+        </tr>
+        <tr>
+          <th class="py-3 pr-4 text-left text-sm font-medium text-contentSecondary w-1/4">Created On</th>
+          <td class="py-3 text-sm text-contentPrimary"><%= @user.created_at.strftime("%B %d, %Y %H:%M") %></td>
+        </tr>
+        <tr>
+          <th class="py-3 pr-4 text-left text-sm font-medium text-contentSecondary w-1/4">Updated At</th>
+          <td class="py-3 text-sm text-contentPrimary"><%= @user.updated_at.strftime("%B %d, %Y %H:%M") %></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>

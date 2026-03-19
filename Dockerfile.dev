@@ -1,0 +1,104 @@
+FROM ruby:4.0.1-slim
+
+RUN apt-get update && apt-get install -y \
+    nodejs \
+    npm \
+    libvips \
+    build-essential \
+    curl \
+    pkg-config \
+    libpq-dev \
+    libyaml-dev \
+    python3 \
+    python3-pip \
+    python3-venv \
+    libjemalloc2 \
+    libatk-bridge2.0-0 \
+    libatk1.0-0 \
+    libcups2 \
+    libdrm2 \
+    libgbm1 \
+    libgtk-3-0 \
+    libnspr4 \
+    libnss3 \
+    libxcomposite1 \
+    libxdamage1 \
+    libxfixes3 \
+    libxkbcommon0 \
+    libxrandr2 \
+    xdg-utils \
+    fonts-liberation \
+    gnupg \
+    lsb-release && \
+    # Add PostgreSQL APT repository (for client tools)
+    curl -fsSL https://www.postgresql.org/media/keys/ACCC4CF8.asc | gpg --dearmor -o /usr/share/keyrings/postgresql-keyring.gpg && \
+    echo "deb [signed-by=/usr/share/keyrings/postgresql-keyring.gpg] http://apt.postgresql.org/pub/repos/apt $(lsb_release -cs)-pgdg main" > /etc/apt/sources.list.d/pgdg.list && \
+    apt-get update && \
+    apt-get install -y postgresql-client-18 && \
+    npm install --global yarn
+
+# Install Rust (latest stable version)
+RUN curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
+ENV PATH="/root/.cargo/bin:$PATH"
+
+WORKDIR /rails
+
+# Create and activate a virtual environment for Python packages
+RUN python3 -m venv /opt/venv
+ENV PATH="/opt/venv/bin:$PATH"
+
+# Copy platform-specific garak requirements lock file
+# TARGETARCH is automatically set by Docker buildx to either "amd64" or "arm64"
+ARG TARGETARCH
+COPY garak-requirements-lock-${TARGETARCH}.txt /tmp/garak-requirements-lock.txt
+COPY playwright-requirements-lock.txt /tmp/playwright-requirements-lock.txt
+COPY scanner-requirements.txt /tmp/scanner-requirements.txt
+
+
+# Install Garak, Playwright, scanner deps, and plugin packages for development from lock files
+RUN /opt/venv/bin/python -m pip install --upgrade pip wheel setuptools && \
+    /opt/venv/bin/python -m pip install --no-cache-dir -r /tmp/garak-requirements-lock.txt && \
+    /opt/venv/bin/python -m pip install --no-cache-dir --prefer-binary -r /tmp/playwright-requirements-lock.txt && \
+    /opt/venv/bin/python -m pip install --no-cache-dir -r /tmp/scanner-requirements.txt && \
+    rm -f /tmp/garak-requirements-lock.txt /tmp/playwright-requirements-lock.txt /tmp/scanner-requirements.txt
+
+COPY Gemfile ./
+COPY Gemfile.lock* ./
+RUN bundle install
+
+## Install npm packages (including Playwright library)
+# Note: Browsers are installed separately below using shared PLAYWRIGHT_BROWSERS_PATH
+COPY package.json package-lock.json ./
+RUN npm install && \
+    # Verify Playwright is installed
+    npm list playwright
+
+# Set Playwright browser path for consistent location
+# Both Python Playwright (garak) and Node.js Playwright (Rails service) will share these browsers
+ENV PLAYWRIGHT_BROWSERS_PATH=/opt/playwright-browsers
+
+# Install Playwright Chromium browser (used for webchat automation and PDF generation)
+RUN mkdir -p /opt/playwright-browsers && \
+    chmod 755 /opt/playwright-browsers && \
+    PLAYWRIGHT_BROWSERS_PATH=/opt/playwright-browsers /opt/venv/bin/python -m playwright install --with-deps chromium && \
+    chmod -R 755 /opt/playwright-browsers
+
+COPY . .
+
+RUN chmod +x StartApplication.sh
+
+# Run and own only the runtime files as a non-root user for security
+RUN groupadd --system --gid 1000 rails && \
+    useradd rails --uid 1000 --gid 1000 --create-home --shell /bin/bash && \
+    chown -R rails:rails /rails /usr/local/bundle && \
+    chown -R rails:rails /opt/venv
+USER 1000:1000
+
+# Cache the HTTP Request: GET https://raw.githubusercontent.com/BerriAI/litellm/main/model_prices_and_context_window.json
+# Commented out to avoid disk space issues during build - will cache at runtime instead
+# RUN garak --list_probes
+
+# Entrypoint prepares the database.
+ENTRYPOINT ["/rails/bin/docker-entrypoint"]
+
+CMD ["/bin/bash", "./StartApplication.sh"]

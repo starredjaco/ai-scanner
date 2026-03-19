@@ -1,0 +1,38 @@
+<%
+  # Company-specific running stats partial
+  # This partial is replaced by Turbo Stream broadcasts
+  stats = local_assigns[:stats] || { scans: 0, variants: 0, total: 0 }
+  scans_count = stats[:scans]
+  variants_count = stats[:variants]
+  total_count = stats[:total]
+  is_active = total_count > 0
+%>
+<div id="system-status-company" class="flex items-center justify-between text-sm pb-2">
+  <div class="flex items-center gap-2">
+    <span class="text-contentSecondary text-xs font-medium uppercase tracking-wider">Reports Running</span>
+  </div>
+  <div class="flex items-center gap-2">
+    <% if is_active %>
+      <div class="w-1.5 h-1.5 bg-primary rounded-full animate-pulse"></div>
+    <% end %>
+    <div class="relative group">
+      <span class="inline-flex items-center px-2 py-1 rounded-md text-xs font-medium border <%= is_active ? 'bg-orange-950/30 border-primary/30 text-primary' : 'bg-backgroundSecondary border-borderPrimary text-contentSecondary' %> cursor-help">
+        <%= scans_count %><% if variants_count > 0 %><span class="text-purple-400"> (+<%= variants_count %>)</span><% end %>
+      </span>
+      <div class="absolute bottom-full right-0 mb-2 px-3 py-2 bg-zinc-900/95 backdrop-blur-md text-white text-xs rounded-xl invisible group-hover:opacity-100 group-hover:visible transition-opacity whitespace-nowrap pointer-events-none z-[999999]" style="box-shadow: 0 2px 10px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(255, 255, 255, 0.1); font-family: var(--brand-font-family), system-ui, sans-serif;">
+        <div class="space-y-1">
+          <div class="flex justify-between gap-6">
+            <span class="text-gray-300">Running scans:</span>
+            <span class="font-medium text-white"><%= scans_count %></span>
+          </div>
+          <% if variants_count > 0 %>
+            <div class="flex justify-between gap-6">
+              <span class="text-gray-300">Variant scans:</span>
+              <span class="font-medium text-purple-400"><%= variants_count %></span>
+            </div>
+          <% end %>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

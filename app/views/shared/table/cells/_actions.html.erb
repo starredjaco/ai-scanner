@@ -1,0 +1,43 @@
+<%# Actions cell - action buttons/links %>
+<% actions = column[:actions] || [] %>
+<% custom_actions = column[:custom_actions] %>
+
+<div class="flex items-center justify-end gap-2">
+  <% if custom_actions.is_a?(Proc) %>
+    <%= custom_actions.call(item) %>
+  <% else %>
+    <% actions.each do |action| %>
+      <% case action.to_sym %>
+      <% when :view, :show %>
+        <% path = column[:view_path].is_a?(Proc) ? column[:view_path].call(item) : send("#{item.class.model_name.singular}_path", item) rescue nil %>
+        <% if path %>
+          <%= link_to path, class: "p-1.5 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 rounded hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors", title: "View" do %>
+            <span class="icon icon-sm icon-eye"></span>
+          <% end %>
+        <% end %>
+      <% when :edit %>
+        <% path = column[:edit_path].is_a?(Proc) ? column[:edit_path].call(item) : send("edit_#{item.class.model_name.singular}_path", item) rescue nil %>
+        <% if path %>
+          <%= link_to path, class: "p-1.5 text-gray-500 hover:text-yellow-600 dark:text-gray-400 dark:hover:text-yellow-400 rounded hover:bg-yellow-50 dark:hover:bg-yellow-900/20 transition-colors", title: "Edit" do %>
+            <span class="icon icon-sm icon-edit"></span>
+          <% end %>
+        <% end %>
+      <% when :delete, :destroy %>
+        <% path = column[:delete_path].is_a?(Proc) ? column[:delete_path].call(item) : send("#{item.class.model_name.singular}_path", item) rescue nil %>
+        <% confirm = column[:delete_confirm] || "Are you sure you want to delete this item?" %>
+        <% if path %>
+          <%= button_to path, method: :delete, form: { data: { turbo: true, turbo_confirm: confirm } }, class: "p-1.5 text-gray-500 hover:text-red-600 dark:text-gray-400 dark:hover:text-red-400 rounded hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors", title: "Delete" do %>
+            <span class="icon icon-sm icon-trash"></span>
+          <% end %>
+        <% end %>
+      <% when :rerun %>
+        <% path = column[:rerun_path].is_a?(Proc) ? column[:rerun_path].call(item) : nil %>
+        <% if path %>
+          <%= button_to path, method: :post, form: { data: { turbo: true } }, class: "p-1.5 text-gray-500 hover:text-blue-600 dark:text-gray-400 dark:hover:text-blue-400 rounded hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors", title: "Rerun" do %>
+            <span class="icon icon-sm icon-replay"></span>
+          <% end %>
+        <% end %>
+      <% end %>
+    <% end %>
+  <% end %>
+</div>

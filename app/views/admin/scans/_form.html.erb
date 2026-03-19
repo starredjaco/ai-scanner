@@ -1,0 +1,157 @@
+<link rel="stylesheet" href="/css/choices.min.css">
+
+<%= form_with model: @scan, url: @scan.persisted? ? scan_path(@scan) : scans_path, data: { controller: "scan-form", "scan-form-parallel-limit-value": SettingsService.parallel_scans_limit, "scan-form-probe-category-outlet": "[data-controller='probe-category']" } do |f| %>
+  <!-- Hero section with scan context (for edit) -->
+  <% if @scan.persisted? %>
+    <div class="pb-6 mb-6 border-b border-borderPrimary">
+      <div class="flex justify-between items-start">
+        <div>
+          <h2 class="text-2xl font-bold text-contentPrimary mb-2">
+            Editing Scan: <%= @scan.name %>
+          </h2>
+          <div class="flex items-center gap-4 text-sm text-contentSecondary">
+            <% if @scan.reports.any? %>
+              <span>Last run: <%= time_ago_in_words(@scan.reports.last.created_at) %> ago</span>
+            <% end %>
+            <% if @scan.recurrence.present? %>
+              <span class="text-contentTertiary">•</span>
+              <span>Next run: <%= scan_format_recurrence_schedule(@scan.recurrence) %></span>
+            <% end %>
+          </div>
+        </div>
+
+        <!-- Quick stats -->
+        <div class="flex gap-3">
+          <div class="bg-backgroundPrimary border border-borderPrimary rounded-lg px-4 py-2 text-center">
+            <div class="text-2xl font-bold text-primary"><%= @scan.targets.count %></div>
+            <div class="text-xs text-contentTertiary">Targets</div>
+          </div>
+          <div class="bg-backgroundPrimary border border-borderPrimary rounded-lg px-4 py-2 text-center">
+            <div class="text-2xl font-bold text-primary"><%= @scan.probes.count %></div>
+            <div class="text-xs text-contentTertiary">Probes</div>
+          </div>
+          <% if @scan.recurrence.present? %>
+            <div class="bg-backgroundPrimary border border-borderPrimary rounded-lg px-4 py-2 text-center">
+              <div class="text-sm font-bold text-lime-400">Active</div>
+              <div class="text-xs text-contentTertiary">Scheduled</div>
+            </div>
+          <% end %>
+        </div>
+      </div>
+    </div>
+  <% end %>
+
+  <!-- Error display section -->
+  <% if @scan.errors.any? %>
+    <div class="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4 mb-6">
+      <div class="flex">
+        <span class="icon icon-md icon-x-circle text-red-400 mr-2"></span>
+        <div>
+          <h3 class="text-sm font-medium text-red-800 dark:text-red-200">Please fix the following errors:</h3>
+          <ul class="mt-2 text-sm text-red-700 dark:text-red-300 list-disc list-inside">
+            <% @scan.errors.full_messages.each do |message| %>
+              <li><%= message %></li>
+            <% end %>
+          </ul>
+        </div>
+      </div>
+    </div>
+  <% end %>
+
+  <!-- Basic Information Section -->
+  <div class="bg-backgroundPrimary rounded-lg border border-borderPrimary p-6 mb-6">
+    <h3 class="text-lg font-semibold mb-4 text-primary">
+      Basic Information
+    </h3>
+
+    <div class="mb-4">
+      <%= f.label :name, "Scan Name", class: "block text-sm font-medium text-contentSecondary mb-2" %>
+      <%= f.text_field :name,
+          required: true,
+          placeholder: "e.g., Security Scan - Dec 25",
+          class: "input-base",
+          data: { "scan-form-target": "nameInput" } %>
+      <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">A descriptive name to identify this scan</p>
+    </div>
+
+    <div class="mb-4">
+      <%= f.label :target_ids, "Targets", class: "block text-sm font-medium text-contentSecondary mb-2" %>
+      <%= f.select :target_ids,
+          options_for_select(@targets.map { |name, id, data| [name, id, data || {}] }, @scan.target_ids),
+          {},
+          multiple: true,
+          required: true,
+          class: "targets-select w-full",
+          data: { "scan-form-target": "targetsSelect", action: "change->scan-form#targetsChanged" } %>
+      <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">Select one or more targets to scan</p>
+    </div>
+
+    <div>
+      <%= f.label :output_server_id, "Output Server", class: "block text-sm font-medium text-contentSecondary mb-2" %>
+      <div class="relative" data-controller="custom-dropdown">
+        <%= f.hidden_field :output_server_id, data: { "custom-dropdown-target": "hiddenInput" } %>
+        <button type="button"
+                class="standard-input flex items-center justify-between w-full gap-3 px-3 py-2 rounded-lg border border-borderPrimary bg-backgroundPrimary text-white text-sm transition-colors"
+                data-action="click->custom-dropdown#toggle"
+                data-selected-value="<%= @scan.output_server_id %>">
+          <span class="text-contentPrimary font-sans text-sm font-normal custom-dropdown__text">
+            <%= @scan.output_server_id.present? ? @output_servers.find { |os| os[1] == @scan.output_server_id }&.first || "None" : "None" %>
+          </span>
+          <span class="icon icon-sm icon-chevron-down text-contentSecondary"></span>
+        </button>
+        <ul class="absolute left-0 top-full mt-1 w-full bg-backgroundSecondary border border-borderPrimary rounded-lg shadow-lg z-10 hidden"
+            data-custom-dropdown-target="menu"
+            data-action="click@window->custom-dropdown#closeIfClickedAway">
+          <li>
+            <button type="button"
+                    data-value=""
+                    class="flex items-center w-full pl-8 pr-3 py-2 text-left font-sans text-sm hover:bg-zinc-800 first:rounded-t-lg last:rounded-b-lg transition-colors relative cursor-pointer <%= @scan.output_server_id.blank? ? 'text-contentPrimary' : 'text-contentSecondary' %>"
+                    data-action="click->custom-dropdown#select">
+              <span class="icon icon-sm icon-check absolute left-2 dropdown-check text-primary <%= 'hidden' unless @scan.output_server_id.blank? %>"></span>
+              None
+            </button>
+          </li>
+          <% @output_servers.each do |name, id| %>
+            <li>
+              <button type="button"
+                      data-value="<%= id %>"
+                      class="flex items-center w-full pl-8 pr-3 py-2 text-left font-sans text-sm hover:bg-zinc-800 first:rounded-t-lg last:rounded-b-lg transition-colors relative cursor-pointer <%= @scan.output_server_id == id ? 'text-contentPrimary' : 'text-contentSecondary' %>"
+                      data-action="click->custom-dropdown#select">
+                <span class="icon icon-sm icon-check absolute left-2 dropdown-check text-primary <%= 'hidden' unless @scan.output_server_id == id %>"></span>
+                <%= name %>
+              </button>
+            </li>
+          <% end %>
+        </ul>
+      </div>
+      <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">Optional: Send scan results to an external server</p>
+    </div>
+
+    <% if current_user.super_admin? %>
+      <div class="mt-4">
+        <div class="flex items-center">
+          <%= f.check_box :priority %>
+          <%= f.label :priority, "Priority Scan (Skip Queue)", class: "ml-2 block text-sm text-gray-700 dark:text-gray-300" %>
+        </div>
+        <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">Check this box to bypass the parallel scan limit and run immediately</p>
+      </div>
+    <% end %>
+  </div>
+
+  <!-- Probe Selection Section -->
+  <%= render "probe_selection", f: f, scan: @scan, probe_categories: @probe_categories, community_categories: @community_categories %>
+
+  <!-- Threat Variants Section (only when variant infrastructure is available) -->
+  <% if @threat_variant_industries.present? %>
+    <%= render "threat_variants", f: f, scan: @scan, threat_variant_industries: @threat_variant_industries %>
+  <% end %>
+
+  <!-- Schedule Configuration -->
+  <%= render "schedule_configuration", f: f, scan: @scan %>
+
+  <!-- Form actions -->
+  <div class="flex items-center justify-end gap-3">
+    <%= link_to "Cancel", @scan.persisted? ? scan_path(@scan) : scans_path, class: "btn-base btn-base-size btn-default-gray" %>
+    <%= button_tag @scan.persisted? ? "Update Scan" : "Create Scan", type: "submit", class: "btn-base btn-base-size btn-default-primary" %>
+  </div>
+<% end %>

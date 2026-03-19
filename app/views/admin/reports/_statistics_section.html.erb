@@ -1,0 +1,143 @@
+<div class="bg-zinc-900 rounded-lg border border-zinc-700 p-4">
+  <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+    <%# Left Column - Key Statistics %>
+    <div>
+      <h2 class="text-xl font-sans font-semibold text-primary tracking-wide mb-3">
+        Key Statistics
+      </h2>
+
+      <div class="space-y-2">
+        <div class="flex justify-between items-center">
+          <span class="text-contentSecondary font-sans text-sm">Duration</span>
+          <span class="text-white font-sans text-sm"><%= formatted_duration(report) %></span>
+        </div>
+
+        <div class="flex justify-between items-center">
+          <span class="text-contentSecondary font-sans text-sm">Attack Success Rate</span>
+          <span class="<%= asr_color_class(report.attack_success_rate) %> font-sans text-sm font-semibold"><%= number_to_percentage(report.attack_success_rate, precision: 1) %></span>
+        </div>
+
+        <div class="flex justify-between items-center">
+          <span class="text-contentSecondary font-sans text-sm">Attacks Succeeded</span>
+          <span class="text-white font-sans text-sm"><%= report.total_successful_attacks %> / <%= report.total_attacks %></span>
+        </div>
+
+        <div class="flex justify-between items-center">
+          <span class="text-contentSecondary font-sans text-sm">Vulnerabilities Found</span>
+          <span class="text-primary font-sans text-sm font-semibold"><%= report.security_vulnerabilities_count %></span>
+        </div>
+      </div>
+
+      <% if report.total_tokens > 0 %>
+        <div class="mt-4 pt-3 border-t border-zinc-700">
+          <h3 class="text-xs font-sans font-medium text-contentTertiary uppercase tracking-wide mb-2">
+            Token Usage
+          </h3>
+
+          <div class="space-y-1">
+            <div class="flex justify-between items-center">
+              <span class="text-contentSecondary font-sans text-xs">Input</span>
+              <span class="text-white font-sans text-xs"><%= number_with_delimiter(report.input_tokens) %></span>
+            </div>
+
+            <div class="flex justify-between items-center">
+              <span class="text-contentSecondary font-sans text-xs">Output</span>
+              <span class="text-white font-sans text-xs"><%= number_with_delimiter(report.output_tokens) %></span>
+            </div>
+
+            <div class="flex justify-between items-center">
+              <span class="text-contentSecondary font-sans text-xs">Total</span>
+              <span class="text-white font-sans text-xs font-semibold"><%= number_with_delimiter(report.total_tokens) %></span>
+            </div>
+          </div>
+
+          <p class="text-xs text-contentSecondary mt-2">Based on tiktoken (GPT-4 tokenization)</p>
+        </div>
+      <% end %>
+    </div>
+
+    <%# Middle Column - ASR History Chart %>
+    <div>
+      <h3 class="text-base font-sans font-semibold text-white tracking-wide mb-3">
+        Attack Success Rate History
+      </h3>
+      <div
+        class="w-full h-[200px]"
+        data-report-redesigned-target="asrHistoryChart"
+        data-report-id="<%= report.id %>">
+      </div>
+    </div>
+
+    <%# Right Column - Frontier Models Chart %>
+    <div>
+      <h3 class="text-base font-sans font-semibold text-white tracking-wide mb-3">
+        Scan Results vs Frontier Models
+      </h3>
+      <div
+        class="w-full h-[200px]"
+        data-report-redesigned-target="topProbesChart"
+        data-report-id="<%= report.id %>">
+      </div>
+    </div>
+  </div>
+</div>
+
+<%# Detector Statistics Section %>
+<div class="bg-zinc-900 rounded-lg border border-zinc-700 overflow-hidden mt-6">
+  <button
+    class="w-full px-4 py-3 flex items-center justify-between cursor-pointer hover:bg-zinc-800/50 transition-colors duration-200"
+    data-action="click->report-redesigned#toggleDetectorStats">
+    <h2 class="text-xl font-sans font-semibold text-primary tracking-wide">
+      Detector Statistics
+    </h2>
+    <span
+      data-report-redesigned-target="detectorChevron"
+      class="icon icon-sm icon-chevron-down text-zinc-400 transition-transform duration-200 rotate-180"></span>
+  </button>
+
+  <div data-report-redesigned-target="detectorContent" class="px-4 pb-4">
+    <% if report.detector_results.any? %>
+      <div class="overflow-x-auto">
+        <table class="w-full">
+          <thead>
+            <tr class="border-b border-zinc-700">
+              <th class="text-left text-contentSecondary font-sans text-xs font-medium uppercase tracking-wide py-2 pr-4">Detector</th>
+              <th class="text-left text-contentSecondary font-sans text-xs font-medium uppercase tracking-wide py-2 px-4">Attack Success Rate</th>
+              <th class="text-left text-contentSecondary font-sans text-xs font-medium uppercase tracking-wide py-2 px-4">Successful Attacks</th>
+              <th class="text-left text-contentSecondary font-sans text-xs font-medium uppercase tracking-wide py-2 pl-4">Max Score</th>
+            </tr>
+          </thead>
+          <tbody>
+            <% report.detector_results.includes(:detector).each do |detector_result| %>
+              <%
+                detector_name = detector_result.detector&.name || "Unknown"
+                short_name = detector_name != "Unknown" ? detector_name.split(".").last : "Unknown"
+                translated_name = I18n.t("detectors.names.#{short_name}", default: short_name)
+              %>
+              <tr class="border-b border-zinc-800 last:border-0">
+                <td class="text-white font-sans text-sm py-2 pr-4">
+                  <%= translated_name %>
+                </td>
+
+                <% asr = detector_result.total > 0 ? (detector_result.passed.to_f / detector_result.total * 100) : 0 %>
+                <td class="font-sans text-sm font-semibold py-2 px-4 <%= asr_color_class(asr) %>">
+                  <%= number_to_percentage(asr, precision: 1) %>
+                </td>
+
+                <td class="text-white font-sans text-sm py-2 px-4">
+                  <%= detector_result.passed %> / <%= detector_result.total %>
+                </td>
+
+                <td class="text-white font-sans text-sm py-2 pl-4">
+                  <%= detector_result.max_score.present? ? detector_result.max_score : "--" %>
+                </td>
+              </tr>
+            <% end %>
+          </tbody>
+        </table>
+      </div>
+    <% else %>
+      <p class="text-contentSecondary font-sans text-sm">No detector results available</p>
+    <% end %>
+  </div>
+</div>

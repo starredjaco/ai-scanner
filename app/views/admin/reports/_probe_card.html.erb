@@ -1,0 +1,101 @@
+<%
+  probe_result = local_assigns[:probe_result]
+  report = local_assigns[:report]
+  index = local_assigns[:index] || 0
+
+  passed = probe_result.passed
+  total = probe_result.total
+  success_rate = total > 0 ? (passed.to_f / total * 100).round(1) : 0
+  max_score = probe_result.max_score
+  has_max_score = max_score.present? && max_score > 0
+
+  rate_color = asr_color_class(success_rate)
+  max_score_bg_color = has_max_score ? score_bg_color_class(max_score) : ""
+  max_score_text_color = has_max_score ? score_color_class(max_score, bold: false) : ""
+
+  probe = probe_result.probe
+  detector = probe_result.detector
+  detector_name = detector&.name || "Unknown"
+  short_name = detector_name != "Unknown" ? detector_name.split(".").last : "Unknown"
+  translated_name = I18n.t("detectors.names.#{short_name}", default: short_name)
+
+  tokens_display = format_token_count(probe_result.input_tokens, probe_result.output_tokens)
+%>
+
+<div class="bg-zinc-900 rounded-lg border border-zinc-700 overflow-hidden"
+     data-action="click->report-redesigned#toggleProbeDetails"
+     data-max-score="<%= max_score || 0 %>"
+     data-asr="<%= success_rate %>"
+     data-probe-id="<%= probe_result.id %>"
+     data-probe-name="<%= probe&.name || 'Unknown Probe' %>">
+  <div class="p-4">
+    <div class="flex justify-between items-center gap-4">
+      <div class="flex items-center gap-3">
+        <% if has_max_score && !detector&.mitigation_bypass? %>
+        <div class="flex flex-col items-center justify-center rounded-lg <%= max_score_bg_color %> shrink-0 py-1 px-2">
+          <div class="text-xs text-white font-sans">Max Score</div>
+          <div class="text-md font-medium <%= max_score_text_color %> font-sans"><%= max_score %>%</div>
+        </div>
+        <% end %>
+
+        <div class="flex flex-col gap-1 min-w-0 font-sans">
+          <div class="flex items-center gap-x-6 gap-y-2 flex-wrap">
+            <div class="flex items-center gap-2 shrink-0">
+              <span class="text-zinc-500 whitespace-nowrap">Probe:</span>
+              <% if probe.present? %>
+                <%= link_to probe.name, probe_path(probe),
+                    class: "text-white hover:text-white/80 font-sans text-base font-medium no-underline transition-colors whitespace-nowrap",
+                    target: "_blank" %>
+                <span class="inline-flex items-center px-2 py-0.5 rounded-md text-xs font-sans bg-orange-950 text-orange-400 whitespace-nowrap">
+                  <%= probe.short_guid %>
+                </span>
+              <% else %>
+                <span class="text-white font-sans text-base font-medium whitespace-nowrap">Unknown Probe</span>
+              <% end %>
+              <%= probe_source_badge(probe) %>
+            </div>
+            <div class="flex items-center gap-2 shrink-0">
+              <span class="text-zinc-500 whitespace-nowrap">Detector:</span>
+              <span class="text-white font-sans text-base font-medium whitespace-nowrap"><%= translated_name %></span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <%# Right side: Stats %>
+      <div class="flex flex-col items-end gap-0.5 shrink-0 font-sans">
+        <div class="text-sm">
+          <span class="text-zinc-500">ASR:</span>
+          <span class="<%= rate_color %>"><%= success_rate %>%</span>
+          <span class="text-white">|</span>
+          <span class="text-white"><%= passed %> / <%= total %></span>
+        </div>
+        <% if tokens_display %>
+          <div class="text-sm">
+            <span class="text-zinc-500">Tokens:</span>
+            <span class="text-white"><%= tokens_display %></span>
+          </div>
+        <% end %>
+      </div>
+    </div>
+  </div>
+
+  <div class="flex flex-col gap-6 px-4 pb-4">
+    <% if show_variants %>
+      <%= render partial: 'admin/reports/probe_variants_section', locals: {
+        probe_result: probe_result,
+        report: report,
+        index: index,
+        all_industries: local_assigns[:all_industries],
+        preloaded: local_assigns[:preloaded]
+      } %>
+    <% end %>
+
+    <%= render partial: 'admin/reports/probe_prompts_section', locals: {
+      probe_result: probe_result,
+      report: report,
+      index: index,
+      preloaded: local_assigns[:preloaded]
+    } %>
+  </div>
+</div>

@@ -1,0 +1,38 @@
+# Dockerfile for Cypress E2E tests
+# This creates a lightweight image containing only the cypress tests and configuration
+
+FROM cypress/included:13.17.0
+
+# Set working directory
+WORKDIR /e2e
+
+# Copy cypress tests and configuration
+COPY cypress ./cypress
+COPY cypress.config.js ./
+
+# Copy package files for any custom dependencies
+COPY package.json package-lock.json* ./
+
+# Install dependencies including cypress devDependency
+RUN npm ci
+
+# Set up non-root user for k8s security
+# The cypress/included image already has a 'node' user with UID 1000
+# We'll use that user instead of creating a new one
+RUN mkdir -p /home/node/.cache && \
+    # Copy Cypress cache and browser binaries from root to node user
+    if [ -d /root/.cache/Cypress ]; then \
+      cp -r /root/.cache/Cypress /home/node/.cache/ && \
+      chown -R node:node /home/node/.cache; \
+    fi && \
+    # Ensure node user owns the working directory
+    chown -R node:node /e2e
+
+# Set Cypress cache directory for non-root user
+ENV CYPRESS_CACHE_FOLDER=/home/node/.cache/Cypress
+
+# Switch to non-root user (node user with UID 1000)
+USER node
+
+# The image will run cypress tests via command passed at runtime
+# Usage: docker run <image> cypress run --config baseUrl=http://target-url

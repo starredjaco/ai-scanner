@@ -1,0 +1,129 @@
+<%# Reusable probe category accordion item %>
+<%# locals: f, scan, category_name, category_data, show_auto_update, nested (optional) %>
+
+<% probes = category_data[:probes] %>
+<% return if probes.empty? %>
+<% category_id = category_name.parameterize.underscore %>
+<% icon = category_data[:icon] %>
+<% color = category_data[:color] %>
+<% is_nested = local_assigns[:nested] || false %>
+
+<div class="border border-borderPrimary rounded-lg overflow-hidden hover:border-primary/50 transition-all <%= 'bg-backgroundSecondary/30' if is_nested %>"
+     data-probe-category-target="category"
+     data-nested="<%= is_nested %>">
+  <!-- Category header -->
+  <div class="flex items-center justify-between p-<%= is_nested ? '3' : '4' %> bg-backgroundSecondary cursor-pointer hover:bg-backgroundSecondary/80 transition-all duration-200"
+       data-action="click->probe-category#toggleCategory"
+       data-probe-category-id="<%= category_id %>"
+       aria-expanded="false"
+       aria-controls="category_content_<%= category_id %>">
+    <div class="flex items-center gap-3">
+      <!-- Category checkbox -->
+      <div data-action="click->probe-category#handleCheckboxClick">
+        <%= check_box_tag "category_#{category_id}",
+            "1",
+            false,
+            id: "category_#{category_id}",
+            data: {
+              "probe-category-target": "categoryCheckbox",
+              "category-id": category_id,
+              action: "change->probe-category#selectCategory"
+            },
+            "aria-label": "Select all #{category_name} probes" %>
+      </div>
+
+      <!-- Category icon and label -->
+      <% unless is_nested %>
+        <span class="icon icon-md <%= icon %> text-<%= color %>-500"></span>
+      <% end %>
+      <label for="category_<%= category_id %>" class="text-<%= is_nested ? 'xs' : 'sm' %> font-medium text-contentPrimary cursor-pointer">
+        <%= category_name %>
+      </label>
+
+      <!-- Selection count badge -->
+      <span class="inline-flex items-center px-2.5 py-0.5 rounded text-xs font-medium bg-zinc-700/50 text-contentTertiary border border-borderPrimary"
+            data-probe-category-target="selectionCount"
+            data-category-id="<%= category_id %>">
+        0 of <%= probes.count %> selected
+      </span>
+
+      <!-- Auto-update checkbox (hidden by default, shown when all selected) -->
+      <% if show_auto_update %>
+        <div class="hidden items-center gap-1 ml-3"
+             data-probe-category-target="autoUpdateContainer"
+             data-category-id="<%= category_id %>"
+             data-action="click->probe-category#stopPropagation">
+          <% sample_probe_name = probes.first&.name.to_s %>
+          <% auto_update_field = if sample_probe_name.end_with?("CM")
+               "auto_update_cm"
+             elsif sample_probe_name.end_with?("HP")
+               "auto_update_hp"
+             else
+               "auto_update_generic"
+             end %>
+          <% is_checked = scan.send(auto_update_field) if scan.persisted? %>
+
+          <%= f.check_box auto_update_field,
+              { id: "scan_#{auto_update_field}",
+                data: {
+                  "probe-category-target": "autoUpdateCheckbox",
+                  "category-id": category_id
+                }
+              },
+              "1", "0" %>
+          <label for="scan_<%= auto_update_field %>" class="text-xs text-contentSecondary cursor-pointer flex items-center gap-1">
+            <span class="icon icon-xs icon-refresh"></span> Auto-update
+          </label>
+
+          <!-- Info tooltip -->
+          <div class="relative inline-block"
+               data-action="mouseenter->probe-category#showTooltip mouseleave->probe-category#hideTooltip">
+            <span class="ml-1 icon icon-xs icon-info text-contentTertiary hover:text-contentSecondary cursor-help"></span>
+            <div class="hidden fixed w-64 p-2 bg-backgroundInversePrimary text-white text-xs rounded shadow-lg whitespace-normal z-[9999]"
+                 data-probe-category-target="tooltip">
+              New probes will be automatically added to this scan when they are released. Your scan will stay up-to-date without manual intervention. Only applies to probes in this category.
+            </div>
+          </div>
+        </div>
+      <% end %>
+    </div>
+
+    <!-- Chevron icon -->
+    <div class="flex items-center">
+      <span class="icon icon-<%= is_nested ? 'sm' : 'md' %> icon-chevron-down text-contentTertiary transition-transform duration-200"
+            data-probe-category-target="chevron"
+            data-category-id="<%= category_id %>"></span>
+    </div>
+  </div>
+
+  <!-- Category content (probes) -->
+  <div id="category_content_<%= category_id %>"
+       class="max-h-0 overflow-hidden transition-all duration-300"
+       data-probe-category-target="content"
+       data-category-id="<%= category_id %>">
+    <div class="p-<%= is_nested ? '3' : '4' %> bg-backgroundPrimary border-t border-borderPrimary">
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-<%= is_nested ? '2' : '3' %>">
+        <% probes.sort_by(&:name).each do |probe| %>
+          <div class="flex items-center">
+            <% is_checked = scan.probes.include?(probe) if scan.persisted? %>
+            <%= check_box_tag "scan[probe_ids][]",
+                probe.id,
+                is_checked,
+                id: "scan_probe_ids_#{probe.id}",
+                class: "mr-2",
+                data: {
+                  "detector-id": probe.detector_id,
+                  "category-id": category_id,
+                  "input-tokens": probe.input_tokens,
+                  "probe-category-target": "probeCheckbox",
+                  action: "change->probe-category#updateCategoryState"
+                } %>
+            <label for="scan_probe_ids_<%= probe.id %>" class="text-<%= is_nested ? 'xs' : 'sm' %> text-contentSecondary cursor-pointer hover:text-contentPrimary transition-colors">
+              <%= probe.name.gsub(/(CM|HP)$/, '') %>
+            </label>
+          </div>
+        <% end %>
+      </div>
+    </div>
+  </div>
+</div>

@@ -1,0 +1,56 @@
+<%
+  action_buttons = []
+
+  # View Full Report (only for completed reports)
+  if report.completed?
+    action_buttons << {
+      label: "View Report",
+      path: report_detail_path(report),
+      data: { turbo: false },
+      target: "_blank",
+      icon: "icon-external-link",
+      variant: :default,
+      color: :gray,
+      size: :base
+    }
+    action_buttons << {
+      label: "Download PDF",
+      path: pdf_report_detail_path(report),
+      data: {
+        pdf_download_target: "button",
+        pdf_download_url_value: pdf_report_detail_path(report),
+        action: "click->pdf-download#downloadPdf"
+      },
+      icon: "icon-download",
+      variant: :default,
+      color: :gray,
+      size: :base
+    }
+  end
+
+  # Stop/Cancel button for running states
+  if report.running? || report.pending? || report.starting? || report.interrupted?
+    action_buttons << {
+      label: report.interrupted? ? "Cancel Retry" : "Stop Scan",
+      path: stop_report_path(report),
+      method: :post,
+      icon: "icon-stop",
+      variant: :default,
+      color: :gray,
+      size: :base
+    }
+  end
+
+  # Delete button (always visible)
+  action_buttons << {
+    label: "Delete",
+    path: report_path(report),
+    method: :delete,
+    data: { turbo_confirm: "Are you sure you want to delete this report?" },
+    icon: "icon-trash",
+    variant: :default,
+    color: :gray,
+    size: :base
+  }
+%>
+<%= render partial: "admin/shared/show_header", locals: { title: "Report #{report.id}", action_buttons: action_buttons } %>

@@ -1,0 +1,115 @@
+<%= render partial: "admin/shared/table_header", locals: { title: "Probes", current_page: :index } %>
+
+<%# Card wrapper for filter panel and table %>
+<div class="rounded-lg bg-backgroundPrimary border border-borderPrimary overflow-hidden">
+  <%# Filter Panel %>
+  <%
+    filters = [
+      { key: :name, label: "Name", type: :text, placeholder: "Search by name..." },
+      { key: :guid, label: "GUID", type: :text, placeholder: "Search GUID..." },
+      { key: :source, label: "Source", type: :select, collection: [["All Sources", nil]] + Probe.distinct.pluck(:source).compact.sort.map { |s| [s.titleize, s] } },
+      { key: :detector, label: "Detector", type: :association, collection: @filter_detectors },
+      { key: :disclosure_status, label: "Disclosure Status", type: :select, collection: @filter_disclosure_statuses },
+      { key: :techniques, label: "Technique", type: :association, collection: @filter_techniques },
+      { key: :release_date, label: "Release Date", type: :date_range }
+    ]
+  %>
+  <%= render "shared/filter/filter_panel",
+      ransack: @q,
+      filters: filters,
+      form_url: probes_path %>
+
+<%
+  columns = [
+    {
+      key: :name,
+      label: "Name",
+      type: :custom,
+      sortable: true,
+      render: ->(probe) { probe_name_with_badge(probe) }
+    },
+    {
+      key: :guid,
+      label: "GUID",
+      type: :code,
+      sortable: true
+    },
+    {
+      key: :taxonomy_categories,
+      label: "Categories",
+      type: :custom,
+      render: ->(probe) {
+        categories = probe.taxonomy_categories.map(&:name).join(", ")
+        if categories.present?
+          content_tag(:span, categories.truncate(40), title: categories, class: "text-sm text-textMuted cursor-help")
+        else
+          content_tag(:span, "—", class: "text-sm text-zinc-500")
+        end
+      }
+    },
+    {
+      key: :success_count,
+      label: "Passed",
+      type: :custom,
+      align: :center,
+      header_class: "whitespace-nowrap",
+      render: ->(probe) {
+        success = probe.success_count.to_i
+        total = probe.total_count.to_i
+        if total > 0
+          content_tag(:span, "#{success} / #{total}", class: "text-sm text-textMuted tabular-nums")
+        else
+          content_tag(:span, "0 / 0", class: "text-sm text-zinc-500 italic")
+        end
+      }
+    },
+    {
+      key: :success_rate_calculated,
+      label: "ASR",
+      type: :custom,
+      sortable: true,
+      align: :center,
+      header_suffix: -> {
+        content_tag(:div, class: "relative flex-shrink-0", data: { controller: "tooltip" }) do
+          safe_join([
+            content_tag(:button, type: "button", class: "flex-shrink-0", aria: { label: "Information about ASR" }, data: { action: "mouseenter->tooltip#show mouseleave->tooltip#hide" }) do
+              content_tag(:span, "", class: "icon icon-sm icon-info text-zinc-300")
+            end,
+            content_tag(:div, class: "hidden absolute left-0 top-full mt-2 w-64 bg-[#27272A] rounded-xl shadow-lg z-50 p-3", data: { tooltip_target: "popup", data: { action: "click->tooltip#stopPropagation" } }) do
+              content_tag(:p, t('tables.tooltips.asr'), class: "text-zinc-400 font-sans text-xs leading-relaxed normal-case")
+            end
+          ])
+        end
+      },
+      render: ->(probe) {
+        rate = probe.success_rate_calculated
+        if rate.present?
+          content_tag(:span, "#{rate.round(1)}%", class: "text-sm font-semibold #{asr_color_class(rate)}")
+        else
+          content_tag(:span, "—", class: "text-sm text-zinc-500")
+        end
+      }
+    },
+    {
+      key: :release_date,
+      label: "Release Date",
+      type: :date,
+      sortable: true
+    },
+    {
+      key: :modified_date,
+      label: "Modified Date",
+      type: :date,
+      sortable: true
+    }
+  ]
+%>
+
+  <%= render "shared/table/table",
+      collection: @probes,
+      columns: columns,
+      ransack: @q,
+      pagy: @pagy,
+      empty_message: "No probes found"
+  %>
+</div>

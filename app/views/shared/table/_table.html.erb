@@ -1,0 +1,62 @@
+<%#
+  Unified Table Component
+
+  Usage:
+    render "shared/table/table",
+        collection: @items,
+        columns: [
+          { key: :name, label: "Name", type: :link, link_path: ->(i) { item_path(i) }, sortable: true },
+          { key: :status, label: "Status", type: :badge, badge_color: ->(i) { i.active? ? :green : :gray } },
+          { key: :created_at, label: "Created", type: :date, sortable: true },
+          { key: :actions, type: :actions, actions: [:view, :edit, :delete] }
+        ],
+        ransack: @q,                    (Optional: enables sorting)
+        batch_actions: [:delete],       (Optional: enables checkboxes)
+        batch_form_url: batch_path,     (Required if batch_actions)
+        empty_message: "No items found",
+        empty_action: { label: "Create New", path: new_item_path }
+%>
+
+<% collection ||= [] %>
+<% columns ||= [] %>
+<% ransack ||= nil %>
+<% batch_actions ||= nil %>
+<% batch_form_url ||= nil %>
+<% empty_message ||= "No items found" %>
+<% empty_action ||= nil %>
+<% table_id ||= "data-table" %>
+<% container_class ||= "" %>
+<% pagy ||= nil %>
+
+<% has_batch_actions = batch_actions.present? && batch_form_url.present? %>
+
+<div class="overflow-hidden bg-backgroundPrimary <%= container_class %>" data-controller="<%= 'batch-select' if has_batch_actions %>">
+  <% if has_batch_actions %>
+    <%# Form only wraps toolbar and hidden inputs - table is outside to allow button_to %>
+    <%= form_with url: batch_form_url, method: :post, id: "#{table_id}-form" do |f| %>
+      <%= render "shared/table/batch_toolbar", batch_actions: batch_actions, form: f %>
+      <div data-batch-select-target="hiddenInputs"></div>
+    <% end %>
+
+    <%# Table is outside form, controller manages syncing selected IDs %>
+    <%= render "shared/table/table_content",
+        collection: collection,
+        columns: columns,
+        ransack: ransack,
+        has_batch_actions: true,
+        empty_message: empty_message,
+        empty_action: empty_action,
+        table_id: table_id %>
+  <% else %>
+    <%= render "shared/table/table_content",
+        collection: collection,
+        columns: columns,
+        ransack: ransack,
+        has_batch_actions: false,
+        empty_message: empty_message,
+        empty_action: empty_action,
+        table_id: table_id %>
+  <% end %>
+</div>
+
+<%= render "shared/table/pagination", pagy: pagy %>

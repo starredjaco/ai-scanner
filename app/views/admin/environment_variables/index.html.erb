@@ -1,0 +1,131 @@
+<%
+  # Build action buttons for the header
+  action_buttons = [{
+    label: "New Environment Variable",
+    path: @target ? new_target_environment_variable_path(@target) : new_environment_variable_path,
+    variant: :default,
+    color: :primary,
+    size: :base
+  }]
+%>
+
+<%= render partial: "admin/shared/table_header", locals: { title: "Environment Variables", current_page: :index, action_buttons: action_buttons } %>
+
+<%# Card wrapper for filter panel and table %>
+<div class="rounded-lg bg-backgroundPrimary border border-borderPrimary overflow-hidden">
+  <%# Filter Panel %>
+  <%
+    filters = [
+      { key: :env_name, label: "Name", type: :text, placeholder: "Search by name..." },
+      { key: :target, label: "Target", type: :association, collection: @filter_targets },
+      { key: :created_at, label: "Created", type: :date_range }
+    ]
+  %>
+  <%= render "shared/filter/filter_panel",
+      ransack: @q,
+      filters: filters,
+      form_url: environment_variables_path %>
+
+<%# Context info for target-specific view %>
+<% if @target %>
+  <div class="ml-4 mr-4 mb-4 p-3 bg-backgroundSecondary rounded-lg border border-borderPrimary">
+    <p class="text-sm text-contentSecondary">
+      Showing environment variables for target: <strong class="text-white"><%= @target.name %></strong>
+    </p>
+  </div>
+<% end %>
+
+<%
+  columns = [
+    {
+      key: :target,
+      label: "Target",
+      type: :custom,
+      sortable: true,
+      sort_key: :target_name,
+      render: ->(env_var) {
+        if env_var.target
+          link_to env_var.target.name, target_path(env_var.target), class: "text-sm text-primary hover:underline"
+        else
+          content_tag(:span, "Global", class: "text-sm text-zinc-500 italic")
+        end
+      }
+    },
+    {
+      key: :env_name,
+      label: "Name",
+      type: :code,
+      sortable: true
+    },
+    {
+      key: :env_value,
+      label: "Value",
+      type: :custom,
+      render: ->(env_var) {
+        value = env_var.env_value.to_s
+        code_class = "px-2 py-1 text-xs font-mono bg-backgroundSecondary rounded"
+
+        content_tag(:div, class: "flex items-center", data: { controller: "value-masking" }) do
+          value_container = content_tag(:div, class: "inline-grid") do
+            mask = content_tag(:code, "••••••••",
+              class: "#{code_class} col-start-1 row-start-1",
+              data: { value_masking_target: "mask" })
+            actual_value = content_tag(:code, value,
+              class: "#{code_class} col-start-1 row-start-1 invisible break-all",
+              data: { value_masking_target: "value" })
+            safe_join([mask, actual_value])
+          end
+          toggle_btn = content_tag(:button, nil, type: "button",
+            class: "ml-2 text-contentTertiary hover:text-white shrink-0 cursor-pointer",
+            title: "Show/Hide value",
+            data: { action: "value-masking#toggle", value_masking_target: "icon" }) do
+            content_tag(:span, "", class: "icon icon-sm icon-eye")
+          end
+          safe_join([value_container, toggle_btn])
+        end
+      }
+    },
+    {
+      key: :created_at,
+      label: "Created On",
+      type: :datetime,
+      sortable: true
+    },
+    {
+      key: :updated_at,
+      label: "Updated At",
+      type: :datetime,
+      sortable: true
+    },
+    {
+      key: :actions,
+      label: "Actions",
+      type: :custom,
+      align: :right,
+      render: ->(env_var) {
+        content_tag(:div, class: "flex items-center justify-end gap-3") do
+          safe_join([
+            link_to(edit_environment_variable_path(env_var), class: "text-actionButton hover:text-textMuted transition-colors", title: "Edit") do
+              content_tag(:span, "", class: "icon icon-sm icon-edit")
+            end,
+            button_to(environment_variable_path(env_var), method: :delete, data: { turbo_confirm: "Are you sure you want to delete this environment variable?" }, class: "text-actionButton hover:text-textMuted transition-colors", title: "Delete", form: { class: "inline-flex items-center" }) do
+              content_tag(:span, "", class: "icon icon-sm icon-trash")
+            end
+          ])
+        end
+      }
+    }
+  ]
+%>
+
+  <%= render "shared/table/table",
+      collection: @environment_variables,
+      columns: columns,
+      ransack: @q,
+      pagy: @pagy,
+      batch_actions: [:delete],
+      batch_form_url: batch_environment_variables_path,
+      empty_message: "No environment variables found",
+      empty_action: { label: "Create Environment Variable", path: @target ? new_target_environment_variable_path(@target) : new_environment_variable_path }
+  %>
+</div>

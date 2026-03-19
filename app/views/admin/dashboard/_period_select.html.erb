@@ -1,0 +1,38 @@
+<div class="relative shrink-0"
+     data-controller="custom-dropdown"
+     data-custom-dropdown-action="<%= action %>"
+     data-dashboard-target="<%= target %>">
+  <button
+    type="button"
+    class="flex items-center justify-center gap-3 px-3 py-2 rounded-xl border border-borderPrimary bg-backgroundSecondary shadow-sm min-w-[120px] cursor-pointer"
+    data-action="click->custom-dropdown#toggle"
+    data-selected-value="<%= selected %>">
+    <span class="text-contentPrimary font-sans text-sm font-normal custom-dropdown__text">
+      <%= case selected
+          when "7" then "7 days"
+          when "30" then "30 days"
+          when "60" then "60 days"
+          when "365" then "1 year"
+          else "30 days"
+          end
+      %>
+    </span>
+    <span class="icon icon-xs icon-chevron-down text-contentSecondary"></span>
+  </button>
+  <ul class="absolute left-0 top-full mt-1 min-w-full bg-backgroundSecondary border border-borderPrimary rounded-xl shadow-lg z-10 hidden"
+      data-custom-dropdown-target="menu"
+      data-action="click@window->custom-dropdown#closeIfClickedAway">
+    <% [["7", "7 days"], ["30", "30 days"], ["60", "60 days"], ["365", "1 year"]].each do |value, label| %>
+      <li>
+        <button
+          type="button"
+          data-value="<%= value %>"
+          class="flex items-center justify-center gap-2 w-full px-3 py-2 font-sans text-sm hover:bg-backgroundTertiary hover:text-white first:rounded-t-xl last:rounded-b-xl transition-colors relative cursor-pointer <%= value == selected ? 'text-contentPrimary' : 'text-contentSecondary' %>"
+          data-action="click->custom-dropdown#select">
+          <span class="icon icon-sm icon-check absolute left-2 dropdown-check <%= 'hidden' unless value == selected %>"></span>
+          <%= label %>
+        </button>
+      </li>
+    <% end %>
+  </ul>
+</div>

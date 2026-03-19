@@ -1,0 +1,50 @@
+<%= turbo_stream_from "pdf_notifications:company_#{current_user.current_company_id}" %>
+<div id="pdf-status-<%= report.id %>" style="display: none;"></div>
+
+<div class="min-h-screen" data-controller="report-redesigned pdf-download" data-pdf-download-report-id-value="<%= report.id %>" data-report-redesigned-probes-tab-url-value="<%= probes_tab_report_path(report) %>">
+  <%= render partial: 'admin/reports/report_header', locals: { report: report } %>
+
+  <%# Tab Navigation %>
+  <nav class="flex gap-2 pt-6" aria-label="Tabs">
+    <button
+      type="button"
+      class="pl-1 pr-3 pb-4 text-xl font-sans font-medium transition-colors text-primary cursor-pointer"
+      data-action="click->report-redesigned#switchTab"
+      data-tab="overview"
+      data-report-redesigned-target="tabOverview">
+      Overview
+    </button>
+    <button
+      type="button"
+      class="px-3 pb-4 text-xl font-sans font-medium transition-colors text-contentTertiary hover:text-contentSecondary cursor-pointer"
+      data-action="click->report-redesigned#switchTab"
+      data-tab="probes"
+      data-report-redesigned-target="tabProbes">
+      Probes
+    </button>
+  </nav>
+
+  <%# Overview Tab Content %>
+  <div class="pb-6" data-report-redesigned-target="tabContentOverview">
+    <div class="mx-auto space-y-6">
+      <%= render partial: 'admin/reports/metadata_section', locals: { report: report } %>
+
+      <%= render partial: 'admin/reports/statistics_section', locals: { report: report } %>
+
+      <% if params[:debug] == 'true' %>
+        <%= render partial: 'admin/reports/logs_section', locals: { report: report } %>
+      <% end %>
+    </div>
+  </div>
+
+  <%# Probes Tab Content — lazy-loaded via Turbo Frame %>
+  <div class="pb-6 hidden" data-report-redesigned-target="tabContentProbes">
+    <div class="mx-auto">
+      <turbo-frame id="report-probes-tab" data-report-redesigned-target="probesFrame">
+        <div class="flex items-center justify-center py-16">
+          <span class="text-sm text-contentSecondary font-sans">Loading probes...</span>
+        </div>
+      </turbo-frame>
+    </div>
+  </div>
+</div>

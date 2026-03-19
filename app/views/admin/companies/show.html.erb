@@ -1,0 +1,76 @@
+<%= render partial: "admin/shared/show_header", locals: { title: @company.name, icon_path: "menu/users.svg", action_buttons: policy(@company).update? ? [{ label: "Edit", path: edit_company_path(@company), variant: :default, color: :gray, size: :base, icon: "icon-pencil-square" }] : [] } %>
+
+<!-- Stats Cards -->
+<div class="grid gap-4 grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 my-6">
+  <div class="bg-white dark:bg-zinc-900 rounded-lg shadow-sm border border-gray-100 dark:border-zinc-700 p-3 lg:p-4">
+    <h3 class="text-white font-sans text-base font-normal mb-3">Tier</h3>
+    <div class="flex items-center gap-2">
+      <span class="px-2 py-0.5 text-sm font-medium rounded <%= tier_css_class(@company.tier) %>">
+        <%= tier_display_name(@company.tier) %>
+      </span>
+    </div>
+  </div>
+  <div class="bg-white dark:bg-zinc-900 rounded-lg shadow-sm border border-gray-100 dark:border-zinc-700 p-3 lg:p-4">
+    <h3 class="text-white font-sans text-base font-normal mb-3">Users</h3>
+    <span class="stat-value"><%= @stats[:users_count] %></span>
+  </div>
+  <div class="bg-white dark:bg-zinc-900 rounded-lg shadow-sm border border-gray-100 dark:border-zinc-700 p-3 lg:p-4">
+    <h3 class="text-white font-sans text-base font-normal mb-3">Targets</h3>
+    <span class="stat-value"><%= @stats[:targets_count] %></span>
+  </div>
+  <div class="bg-white dark:bg-zinc-900 rounded-lg shadow-sm border border-gray-100 dark:border-zinc-700 p-3 lg:p-4">
+    <h3 class="text-white font-sans text-base font-normal mb-3">Scans</h3>
+    <span class="stat-value"><%= @stats[:scans_count] %></span>
+  </div>
+</div>
+
+<h3 class="text-lg font-semibold text-contentPrimary mb-4">Users</h3>
+
+<!-- Users Table using shared table component -->
+<div class="rounded-lg bg-backgroundPrimary border border-borderPrimary overflow-hidden">
+  <%= render "shared/table/table",
+      collection: @users,
+      columns: [
+        {
+          key: :email,
+          label: "Email",
+          type: :link,
+          link_path: ->(user) { user_path(user) },
+          link_class: "text-primary hover:text-primary/80 no-underline transition-colors",
+          sortable: false
+        },
+        {
+          key: :super_admin,
+          label: "Super Admin",
+          type: :status_tag,
+          sortable: false,
+          value: ->(user) { user.super_admin? }
+        },
+        {
+          key: :created_at,
+          label: "Created",
+          type: :datetime,
+          sortable: false
+        },
+        policy(User).see_impersonate_column? ? {
+          key: :actions,
+          label: "Actions",
+          type: :custom,
+          align: :right,
+          render: ->(user) {
+            if policy(user).impersonate?
+              button_to impersonation_path(id: user.id),
+                  method: :post,
+                  class: "text-actionButton hover:text-textMuted transition-colors inline-flex items-center gap-2 cursor-pointer",
+                  title: "Login as #{user.email}",
+                  form: { class: "inline-flex items-center", data: { turbo_frame: "_top" } } do
+                content_tag(:span, "", class: "icon icon-sm icon-arrow-right-end-on-rectangle")
+              end
+            else
+              content_tag(:span, "—", class: "text-textMuted")
+            end
+          }
+        } : nil
+      ].compact,
+      empty_message: "No users found" %>
+</div>

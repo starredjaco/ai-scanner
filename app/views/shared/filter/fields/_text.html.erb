@@ -1,0 +1,35 @@
+<%#
+  Text Filter Field
+
+  Uses Ransack _cont (contains) predicate by default.
+
+  filter: {
+    key: :name,
+    label: "Name",
+    placeholder: "Search...",   # Optional
+    predicate: :name_cont       # Optional - custom predicate (e.g., for association searches like target_name_cont)
+  }
+%>
+
+<% filter ||= {} %>
+<% ransack ||= nil %>
+
+<% field_key = filter[:key] %>
+<%# Allow custom predicate for association text searches (e.g., target_name_cont) %>
+<% predicate = filter[:predicate] || "#{field_key}_cont" %>
+<% param_name = "q[#{predicate}]" %>
+<% current_value = begin; ransack&.send(predicate); rescue NoMethodError; nil; end %>
+
+<div class="space-y-1">
+  <label for="<%= param_name %>" class="block text-xs font-medium text-textMuted uppercase tracking-wider">
+    <%= filter[:label] || field_key.to_s.humanize %>
+  </label>
+  <input
+    type="text"
+    name="<%= param_name %>"
+    id="<%= param_name %>"
+    value="<%= current_value %>"
+    placeholder="<%= filter[:placeholder] || "Search..." %>"
+    class="input-base"
+  />
+</div>

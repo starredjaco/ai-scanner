@@ -1,0 +1,44 @@
+<%# Ransack filters sidebar for admin index pages %>
+<% if defined?(search) && search.present? %>
+  <div class="filters-sidebar bg-white dark:bg-gray-900 rounded-lg p-4 shadow-sm">
+    <div class="flex flex-col mb-4">
+      <%= image_tag "filter.svg", class: "h-6 w-6 stroke-orange-500" %>
+      <div class="ml-2 text-orange-400 uppercase tracking-wider text-sm font-semibold">FILTER BY</div>
+    </div>
+
+    <%= search_form_for search, url: request.path, html: { class: 'filters-form space-y-4' } do |f| %>
+      <% if filters.present? %>
+        <% filters.each do |filter| %>
+          <div class="filter-field">
+            <% case filter[:type] %>
+            <% when :string %>
+              <%= f.label filter[:attribute], class: 'block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1' %>
+              <%= f.text_field "#{filter[:attribute]}_cont",
+                  class: 'w-full bg-white dark:bg-gray-700 rounded-lg py-2 px-3 border border-gray-300 dark:border-gray-600 text-gray-900 dark:text-gray-100',
+                  placeholder: filter[:placeholder] || "Search #{filter[:attribute].to_s.humanize}" %>
+            <% when :select %>
+              <%= f.label filter[:attribute], class: 'block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1' %>
+              <%= f.select "#{filter[:attribute]}_eq",
+                  filter[:collection] || [],
+                  { include_blank: 'All' },
+                  class: 'w-full bg-white dark:bg-gray-700 rounded-lg py-2 px-3 border border-gray-300 dark:border-gray-600 text-gray-900 dark:text-gray-100' %>
+            <% when :date %>
+              <%= f.label filter[:attribute], class: 'block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1' %>
+              <%= f.date_field "#{filter[:attribute]}_gteq",
+                  class: 'w-full bg-white dark:bg-gray-700 rounded-lg py-2 px-3 border border-gray-300 dark:border-gray-600 text-gray-900 dark:text-gray-100',
+                  placeholder: 'From' %>
+              <%= f.date_field "#{filter[:attribute]}_lteq",
+                  class: 'w-full mt-2 bg-white dark:bg-gray-700 rounded-lg py-2 px-3 border border-gray-300 dark:border-gray-600 text-gray-900 dark:text-gray-100',
+                  placeholder: 'To' %>
+            <% end %>
+          </div>
+        <% end %>
+      <% end %>
+
+      <div class="flex gap-2 pt-4 border-t border-gray-200 dark:border-gray-700">
+        <%= f.submit 'Apply Filters', class: 'flex-1 bg-orange-600 hover:bg-orange-700 text-white font-medium py-2 px-4 rounded-lg transition-colors' %>
+        <%= link_to 'Clear', request.path, class: 'flex-1 bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 text-gray-800 dark:text-gray-200 font-medium py-2 px-4 rounded-lg text-center transition-colors' %>
+      </div>
+    <% end %>
+  </div>
+<% end %>

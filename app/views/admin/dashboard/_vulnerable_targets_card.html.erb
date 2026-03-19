@@ -1,0 +1,11 @@
+<div class="bg-white dark:bg-zinc-900 rounded-lg shadow-sm border border-gray-100 dark:border-zinc-700 p-3 lg:p-4">
+  <div class="flex items-center gap-2 mb-4">
+    <h3 class="text-white font-sans text-base font-normal">
+      <%= link_to "Most Vulnerable Targets Over Time", targets_path, class: "text-white hover:text-primary transition-colors" %>
+    </h3>
+    <%= render 'shared/info_tooltip', aria_label: 'Information about Most Vulnerable Targets Over Time', content: t('dashboard.tooltips.vulnerable_targets') %>
+  </div>
+  <div data-dashboard-target="vulnerableTargetsChart" class="w-full h-56 sm:h-64" aria-label="Most Vulnerable Targets Over Time chart">
+    <%= render partial: "charts/shared/loading_notice" %>
+  </div>
+</div>

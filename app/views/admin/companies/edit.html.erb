@@ -1,0 +1,19 @@
+<%
+  action_buttons = []
+
+  action_buttons << {
+    label: "Delete",
+    path: company_path(@company),
+    method: :delete,
+    data: { turbo_confirm: "Are you sure you want to delete #{@company.name}? This will destroy all associated data." },
+    variant: :default,
+    color: :gray,
+    size: :base,
+    icon: "icon-trash"
+  }
+%>
+<%= render partial: "admin/shared/show_header", locals: { title: "Edit Company: #{@company.name}", action_buttons: action_buttons } %>
+
+<div class="py-6">
+  <%= render "form", company: @company %>
+</div>

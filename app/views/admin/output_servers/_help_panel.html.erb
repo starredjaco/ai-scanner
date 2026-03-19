@@ -1,0 +1,86 @@
+<div class="rounded-lg bg-backgroundPrimary border border-borderPrimary p-6">
+  <h3 class="text-xl font-sans font-semibold text-primary tracking-wide mb-6">
+    Help Information
+  </h3>
+
+  <div class="space-y-6">
+    <!-- Name Section -->
+    <div>
+      <h4 class="font-semibold text-contentPrimary text-sm mb-2">Name</h4>
+      <p class="text-contentSecondary text-sm">A unique, descriptive name for this integration.</p>
+    </div>
+
+    <!-- Server Type Section -->
+    <div>
+      <h4 class="font-semibold text-contentPrimary text-sm mb-2">Server Type</h4>
+      <p class="text-contentSecondary text-sm">
+        Choose the integration type (e.g., Splunk, Rsyslog).
+      </p>
+    </div>
+
+    <!-- Host/Port/Protocol Section -->
+    <div>
+      <h4 class="font-semibold text-contentPrimary text-sm mb-2">Host, Port & Protocol</h4>
+      <p class="text-contentSecondary text-sm">
+        Specify the destination host, port, and protocol (e.g., http, https, tcp, udp, tls).
+      </p>
+    </div>
+
+    <!-- Endpoint Path Section -->
+    <div>
+      <h4 class="font-semibold text-contentPrimary text-sm mb-2">Endpoint Path</h4>
+      <p class="text-contentSecondary text-sm">
+        (Optional) Path to append to the base URL for API integrations.
+      </p>
+    </div>
+
+    <!-- Authentication Section -->
+    <div>
+      <h4 class="font-semibold text-contentPrimary text-sm mb-2">Authentication</h4>
+      <p class="text-contentSecondary text-sm">
+        Provide credentials or tokens as required by the integration (e.g., access token, API key, username/password).
+      </p>
+      <p class="text-contentSecondary text-sm mt-2 italic">
+        Note: Sensitive fields are hidden by default for security. Click the eye icon to reveal them when editing.
+      </p>
+    </div>
+
+    <!-- Additional Settings Section -->
+    <div>
+      <h4 class="font-semibold text-contentPrimary text-sm mb-2">Additional Settings (JSON)</h4>
+      <p class="text-contentSecondary text-sm mb-3">
+        Advanced options in JSON format. Use for custom headers, TLS options, or other integration-specific settings.
+      </p>
+      <div class="bg-backgroundSecondary p-4 rounded-lg border border-borderPrimary">
+        <p class="text-contentSecondary text-xs font-semibold mb-2">Example:</p>
+        <pre class="text-contentPrimary text-xs font-mono whitespace-pre-wrap break-words">{
+  "headers": {
+    "X-Custom-Header": "value"
+  },
+  "tls_cert_file": "/storage/certs/cert.pem",
+  "tls_key_file": "/storage/certs/key.pem",
+  "ca_file": "/storage/certs/ca.pem"
+}</pre>
+        <p class="text-contentSecondary text-xs mt-3 italic">
+          For Splunk: use 'headers' for custom HTTP headers. For Rsyslog TLS: provide 'tls_cert_file', 'tls_key_file', and 'ca_file'.
+        </p>
+      </div>
+    </div>
+
+    <!-- Enabled Section -->
+    <div>
+      <h4 class="font-semibold text-contentPrimary text-sm mb-2">Enabled</h4>
+      <p class="text-contentSecondary text-sm">
+        Toggle to activate or deactivate this integration.
+      </p>
+    </div>
+
+    <!-- Description Section -->
+    <div>
+      <h4 class="font-semibold text-contentPrimary text-sm mb-2">Description</h4>
+      <p class="text-contentSecondary text-sm">
+        Describe the integration's purpose and any relevant notes.
+      </p>
+    </div>
+  </div>
+</div>

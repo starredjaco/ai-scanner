@@ -1,0 +1,198 @@
+<%= render partial: "admin/shared/table_header", locals: { title: "Reports", current_page: :index } %>
+
+<%# Scope tabs with counts %>
+<div class="mb-4">
+  <div class="flex flex-wrap gap-2">
+    <% scope_order = [:all, :completed, :failed, :running, :pending, :starting, :interrupted, :variants] %>
+    <% scope_order.each do |scope_name| %>
+      <% count = @scope_counts[scope_name] %>
+      <% is_selected = scope_name == @scope.to_sym %>
+      <%= link_to reports_path(scope: scope_name, q: params[:q]&.to_unsafe_h),
+          class: "inline-flex items-center gap-2 px-3 py-2 text-sm font-medium transition-colors rounded-lg #{is_selected ? 'text-primary' : 'text-contentTertiary hover:text-white'}" do %>
+        <%= scope_name.to_s.capitalize %>
+        <% if count && count > 0 %>
+          <span class="px-2 py-0.5 text-xs rounded-md <%= is_selected ? 'bg-orange-950 text-primary' : 'bg-borderInversePrimary text-contentTertiary' %>">
+            <%= count > 999 ? "#{(count / 1000.0).round(1)}k" : count %>
+          </span>
+        <% end %>
+      <% end %>
+    <% end %>
+  </div>
+</div>
+
+<%# Card wrapper for filter panel and table %>
+<div class="rounded-lg bg-backgroundPrimary border border-borderPrimary overflow-hidden">
+  <%# Filter Panel %>
+  <%
+    # Build form URL with scope and optional scan_id
+    filter_url_params = { scope: @scope }
+    filter_url_params[:scan_id] = params[:scan_id] if params[:scan_id].present?
+
+    filters = [
+      { key: :uuid, label: "UUID", type: :text, placeholder: "Search UUID..." },
+      { key: :target_name, label: "Target Name", type: :text, predicate: :target_name_cont, placeholder: "Search target name..." },
+      { key: :target, label: "Target", type: :association, collection: @filter_targets },
+      { key: :created_at, label: "Created", type: :date_range }
+    ]
+  %>
+  <%= render "shared/filter/filter_panel",
+      ransack: @q,
+      filters: filters,
+      form_url: reports_path(filter_url_params) %>
+
+<%
+  columns = []
+
+  # Add Parent Scan column for variants scope
+  if @scope == "variants"
+    columns << {
+      key: :parent_scan,
+      label: "Parent Scan",
+      type: :custom,
+      render: ->(report) {
+        if report.parent_report.present?
+          link_to report.parent_report.name, report_path(report.parent_report), class: "text-sm text-primary hover:underline"
+        else
+          content_tag(:span, "—", class: "text-sm text-zinc-500")
+        end
+      }
+    }
+  end
+
+  columns += [
+    {
+      key: :scan_name,
+      label: "Scan",
+      type: :custom,
+      sortable: false,
+      sort_key: :scan_name,
+      render: ->(report) {
+        link_to report.scan.name, scan_path(report.scan), class: "text-sm text-primary hover:underline"
+      }
+    },
+    {
+      key: :target,
+      label: "Target",
+      type: :custom,
+      sortable: false,
+      sort_key: :target_name,
+      render: ->(report) {
+        target = report.target
+        if target
+          content_tag(:div, class: "flex items-center gap-2") do
+            safe_join([
+              target_status_indicator(target),
+              content_tag(:span, target.name, class: "text-sm text-textMuted")
+            ])
+          end
+        else
+          content_tag(:span, "—", class: "text-sm text-zinc-500")
+        end
+      }
+    },
+    {
+      key: :status,
+      label: "Status",
+      type: :custom,
+      sortable: true,
+      render: ->(report) { status_tag(report.status) }
+    },
+    {
+      key: :asr,
+      label: "ASR",
+      type: :custom,
+      header_suffix: -> {
+        content_tag(:div, class: "relative flex-shrink-0", data: { controller: "tooltip" }) do
+          safe_join([
+            content_tag(:button, type: "button", class: "flex-shrink-0", aria: { label: "Information about ASR" }, data: { action: "mouseenter->tooltip#show mouseleave->tooltip#hide" }) do
+              content_tag(:span, "", class: "icon icon-sm icon-info text-zinc-300")
+            end,
+            content_tag(:div, class: "hidden absolute left-0 top-full mt-2 w-64 bg-[#27272A] rounded-xl shadow-lg z-50 p-3", data: { tooltip_target: "popup", action: "click->tooltip#stopPropagation" }) do
+              content_tag(:p, t('tables.tooltips.asr'), class: "text-zinc-400 font-sans text-xs leading-relaxed normal-case")
+            end
+          ])
+        end
+      },
+      render: ->(report) {
+        content_tag(:span, report.formatted_asr, class: "text-sm font-semibold #{asr_color_class(report.attack_success_rate)}")
+      }
+    },
+    {
+      key: :successful_attacks,
+      label: "Successful Attacks",
+      type: :custom,
+      render: ->(report) {
+        total = report.cached_total
+        if total > 0
+          content_tag(:span, "#{report.cached_passed}/#{total}", class: "text-sm text-textMuted tabular-nums")
+        else
+          content_tag(:span, "—", class: "text-sm text-zinc-500")
+        end
+      }
+    },
+    {
+      key: :created_at,
+      label: "Created On",
+      type: :date,
+      sortable: true
+    },
+    {
+      key: :actions,
+      label: "Actions",
+      type: :custom,
+      align: :right,
+      render: ->(report) {
+        content_tag(:div, class: "flex items-center justify-end gap-3") do
+          links = []
+
+          # Stop/Cancel button (for running states)
+          if report.running? || report.pending? || report.starting? || report.interrupted?
+            if report.interrupted?
+              links << button_to(stop_report_path(report), method: :post, data: { turbo_confirm: "Are you sure you want to cancel this retry?" }, class: "text-actionButton hover:text-textMuted transition-colors cursor-pointer", title: "Cancel Retry", form: { class: "inline-flex items-center" }) do
+                content_tag(:span, "", class: "icon icon-sm icon-cancel")
+              end
+            else
+              links << button_to(stop_report_path(report), method: :post, data: { turbo_confirm: "Are you sure you want to stop this scan?" }, class: "text-actionButton hover:text-textMuted transition-colors cursor-pointer", title: "Stop Scan", form: { class: "inline-flex items-center" }) do
+                content_tag(:span, "", class: "icon icon-sm icon-stop")
+              end
+            end
+          else
+            links << content_tag(:span, "", class: "w-4")
+          end
+
+          # View Overview (always visible)
+          links << link_to(report_path(report), class: "text-actionButton hover:text-textMuted transition-colors cursor-pointer", title: "View Overview") do
+            content_tag(:span, "", class: "icon icon-sm icon-view")
+          end
+
+          # View Detailed Report (completed only, opens in new tab)
+          if report.completed?
+            links << link_to(report_detail_path(report), target: "_blank", class: "text-actionButton hover:text-textMuted transition-colors cursor-pointer", title: "View Detailed Report") do
+              content_tag(:span, "", class: "icon icon-sm icon-external-link")
+            end
+          else
+            links << content_tag(:span, "", class: "w-4")
+          end
+
+          safe_join(links)
+        end
+      }
+    }
+  ]
+
+  # Build batch form URL with current scope and scan_id
+  batch_url_params = { scope: @scope }
+  batch_url_params[:scan_id] = params[:scan_id] if params[:scan_id].present?
+%>
+
+  <%= render "shared/table/table",
+      collection: @reports,
+      columns: columns,
+      ransack: @q,
+      pagy: @pagy,
+      batch_actions: [:stop, :delete],
+      batch_form_url: batch_reports_path(batch_url_params),
+      empty_message: "No reports found",
+      empty_action: nil
+  %>
+</div>

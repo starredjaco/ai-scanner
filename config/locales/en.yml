@@ -1,0 +1,74 @@
+# Files in the config/locales directory are used for internationalization and
+# are automatically loaded by Rails. If you want to use locales other than
+# English, add the necessary files in this directory.
+#
+# To use the locales, use `I18n.t`:
+#
+#     I18n.t "hello"
+#
+# In views, this is aliased to just `t`:
+#
+#     <%= t("hello") %>
+#
+# To use a different locale, set it with `I18n.locale`:
+#
+#     I18n.locale = :es
+#
+# This would use the information in config/locales/es.yml.
+#
+# To learn more about the API, please read the Rails Internationalization guide
+# at https://guides.rubyonrails.org/i18n.html.
+#
+# Be aware that YAML interprets the following case-insensitive strings as
+# booleans: `true`, `false`, `on`, `off`, `yes`, `no`. Therefore, these strings
+# must be quoted to be interpreted as strings. For example:
+#
+#     en:
+#       "yes": yup
+#       enabled: "ON"
+
+en:
+  activerecord:
+    models:
+      probe_upload:
+        one: "Probe Update"
+        other: "Probe Updates"
+  detectors:
+    names:
+      MitigationBypass: "Generic Mitigation Bypass Checks"
+      CrystalMethScore: "Illicit Substances: Crystal Meth"
+      NerveAgent: "Harmful Substances: Nerve Agent"
+      CopyRightScoreHarryPotterChapterOne: "Copyright Violation: Harry Potter"
+      TiananmenSquareCensorshipBypass: "Censorship Bypass: Tiananmen Square"
+  flash:
+    actions:
+      destroy:
+        notice: "%{resource_name} was successfully deleted."
+        alert: "%{resource_name} could not be deleted."
+
+  tables:
+    tooltips:
+      asr: "Attack Success Rate - The percentage of probe attempts that successfully identified vulnerabilities."
+
+  charts:
+    tooltips:
+      reports_growth: "Cumulative number of reports generated over time."
+      asr_gauge: "Percentage of probes that successfully identified vulnerabilities in the last 30 days."
+      asr_history: "Attack success rate trend over time, showing vulnerability patterns."
+      detector_activity: "Detection methods most active during scanning."
+      attacks_by_target: "Successful vulnerability detections by target over time."
+      probe_asr_history: "Probe attack success rate trend over time."
+      probe_success_gauge: "Probe success rate over the last 30 days."
+
+  dashboard:
+    tooltips:
+      total_probes: "Total number of security probes available in the system."
+      total_scans: "Total number of security scans completed across all targets."
+      average_asr: "Average Attack Success Rate across all completed scans. ASR measures the percentage of probe attempts that successfully identified vulnerabilities."
+      average_scan_time: "Average time taken to complete a security scan."
+      last_five_scans: "Attack Success Rate for the five most recent scans, showing recent vulnerability detection trends."
+      vulnerable_targets: "Targets with the highest vulnerability scores over time, helping identify systems that need attention."
+      detector_activity: "Distribution of probe activity across different detector categories, showing which detection methods are most active."
+      taxonomy_distribution: "Distribution of probes by security taxonomy categories, showing coverage across different vulnerability types."
+      probe_disclosure: "Statistics on probe disclosure status, showing the breakdown of public versus undisclosed probes."
+      scans_targets_time: "Historical trend of scan counts and target counts over time, showing system usage patterns."

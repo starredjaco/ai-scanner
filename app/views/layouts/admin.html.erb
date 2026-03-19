@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="<%= I18n.locale %>" class="h-full dark scroll-smooth">
+<head>
+  <title><%= html_head_site_title %></title>
+  <%= render "layouts/partials/html_head" %>
+  <% if SettingsService.custom_header_html.present? %>
+    <%= raw SettingsService.custom_header_html %>
+  <% end %>
+</head>
+<body class="bg-white dark:bg-zinc-800 text-gray-950 dark:text-gray-100 antialiased flex flex-col min-h-screen" data-controller="mobile-nav">
+  <%= render "layouts/partials/impersonation_banner" %>
+  <%= render "layouts/partials/site_header", title: site_title %>
+  <div class="xl:ms-60 flex flex-col grow pt-[20px]">
+    <%= render "layouts/partials/main_navigation" %>
+    <turbo-frame id="main-content" data-turbo-action="advance">
+      <%= render "layouts/partials/page_header", title: @page_title || page_title %>
+      <%= render "layouts/partials/flash_messages" %>
+      <div data-test-page-content class="px-2.5 lg:px-5 grow">
+        <div class="min-h-0 flex gap-6">
+          <div class="flex-1 min-w-0">
+            <%= yield %>
+          </div>
+          <%= render "layouts/partials/sidebar" %>
+        </div>
+      </div>
+    </turbo-frame>
+    <%= render "layouts/partials/site_footer" %>
+  </div>
+</body>
+</html>

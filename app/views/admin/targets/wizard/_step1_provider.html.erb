@@ -1,0 +1,65 @@
+<div class="max-w-4xl mx-auto">
+  <div class="text-center mb-8">
+    <h2 class="text-2xl font-bold text-contentPrimary mb-2">Choose Your AI Provider</h2>
+    <p class="text-contentSecondary">Select a pre-configured provider to get started, or choose Custom for advanced configuration</p>
+  </div>
+
+  <%# Hidden field populated by the controller on card click %>
+  <%= f.hidden_field :target_type, value: target.target_type || "api", data: { "target-wizard-target": "targetTypeField" } %>
+
+  <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
+    <% provider_templates.each do |key, template| %>
+      <div class="group relative rounded-lg bg-backgroundSecondary border border-borderPrimary hover:border-primary/50 p-4 transition-all cursor-pointer"
+           data-target-wizard-target="providerCard"
+           data-action="click->target-wizard#selectProvider"
+           data-provider="<%= key %>">
+        <div class="flex items-start justify-between mb-3">
+          <div class="w-12 h-12 <%= template[:icon_bg] %> rounded-lg flex items-center justify-center border border-borderPrimary">
+            <span class="icon icon-lg <%= template[:icon] %> <%= template[:icon_color] %>"></span>
+          </div>
+          <span class="text-xs <%= template[:badge_color] %> border px-2 py-1 rounded"><%= template[:badge] %></span>
+        </div>
+        <h3 class="font-bold text-contentPrimary mb-1"><%= template[:name].split("(").first.strip %></h3>
+        <p class="text-sm text-contentSecondary mb-3"><%= template[:description] %></p>
+        <div class="text-xs text-contentTertiary">Requires: <%= template[:env_var] %></div>
+      </div>
+    <% end %>
+
+    <%# Custom / Advanced card %>
+    <div class="group relative rounded-lg bg-backgroundSecondary border border-borderPrimary hover:border-primary/50 p-4 transition-all cursor-pointer"
+         data-target-wizard-target="providerCard"
+         data-action="click->target-wizard#selectProvider"
+         data-provider="custom">
+      <div class="flex items-start justify-between mb-3">
+        <div class="w-12 h-12 bg-zinc-600/20 rounded-lg flex items-center justify-center border border-borderPrimary">
+          <span class="icon icon-lg icon-cog text-zinc-400"></span>
+        </div>
+        <span class="text-xs bg-zinc-700/50 text-contentTertiary border border-borderPrimary px-2 py-1 rounded">Advanced</span>
+      </div>
+      <h3 class="font-bold text-contentPrimary mb-1">Custom Configuration</h3>
+      <p class="text-sm text-contentSecondary mb-3">Manually configure any garak-supported generator</p>
+      <div class="text-xs text-contentTertiary">For advanced users with custom setups</div>
+    </div>
+  </div>
+
+  <%# Webchat section %>
+  <div class="border-t border-borderPrimary pt-6">
+    <p class="text-sm text-contentSecondary mb-4 text-center">Or scan a web-based chat interface</p>
+    <div class="max-w-sm mx-auto">
+      <div class="group relative rounded-lg bg-backgroundSecondary border border-borderPrimary hover:border-primary/50 p-4 transition-all cursor-pointer"
+           data-target-wizard-target="providerCard"
+           data-action="click->target-wizard#selectProvider"
+           data-provider="webchat">
+        <div class="flex items-start justify-between mb-3">
+          <div class="w-12 h-12 bg-amber-500/20 rounded-lg flex items-center justify-center border border-borderPrimary">
+            <span class="icon icon-lg icon-chat text-amber-400"></span>
+          </div>
+          <span class="text-xs bg-amber-500/20 text-amber-400 border border-borderPrimary px-2 py-1 rounded">Experimental</span>
+        </div>
+        <h3 class="font-bold text-contentPrimary mb-1">Webchat Target</h3>
+        <p class="text-sm text-contentSecondary mb-3">Auto-detect selectors from any web chat interface using AI</p>
+        <div class="text-xs text-contentTertiary">Requires: Public URL of the chat interface</div>
+      </div>
+    </div>
+  </div>
+</div>

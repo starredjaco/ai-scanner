@@ -1,0 +1,9 @@
+<%= stylesheet_link_tag "application" %>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<%= csrf_meta_tags %>
+<%= csp_meta_tag %>
+<%= action_cable_meta_tag %>
+<%= javascript_importmap_tags %>
+<% # Custom admin JavaScript %>
+<script type="module">import "application"</script>
+<%= render "shared/clarity" %>

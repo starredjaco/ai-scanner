@@ -1,0 +1,44 @@
+<%#
+  Date Range Filter Field
+
+  Uses Ransack _gteq (from) and _lteq (to) predicates.
+
+  filter: {
+    key: :created_at,
+    label: "Created"
+  }
+%>
+
+<% filter ||= {} %>
+<% ransack ||= nil %>
+
+<% field_key = filter[:key] %>
+<% from_param = "q[#{field_key}_gteq]" %>
+<% to_param = "q[#{field_key}_lteq]" %>
+<% from_value = ransack&.send("#{field_key}_gteq") %>
+<% to_value = ransack&.send("#{field_key}_lteq") %>
+
+<div class="space-y-1">
+  <label class="block text-xs font-medium text-textMuted uppercase tracking-wider">
+    <%= filter[:label] || field_key.to_s.humanize %>
+  </label>
+  <div class="flex items-center gap-2">
+    <input
+      type="date"
+      name="<%= from_param %>"
+      id="<%= from_param %>"
+      value="<%= from_value.is_a?(Date) || from_value.is_a?(Time) ? from_value.to_date : from_value %>"
+      placeholder="From"
+      class="input-base flex-1 scheme-dark"
+    />
+    <span class="text-textMuted text-sm">to</span>
+    <input
+      type="date"
+      name="<%= to_param %>"
+      id="<%= to_param %>"
+      value="<%= to_value.is_a?(Date) || to_value.is_a?(Time) ? to_value.to_date : to_value %>"
+      placeholder="To"
+      class="input-base flex-1 scheme-dark"
+    />
+  </div>
+</div>

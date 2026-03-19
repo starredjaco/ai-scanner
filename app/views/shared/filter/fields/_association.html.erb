@@ -1,0 +1,48 @@
+<%#
+  Association Filter Field
+
+  For belongs_to/has_many associations.
+  Uses Ransack _id_eq predicate for single select.
+
+  filter: {
+    key: :target,         # Association name (will append _id for param)
+    label: "Target",
+    collection: Target.pluck(:name, :id),  # Array of [label, id]
+    include_blank: "Any"  # Optional
+  }
+%>
+
+<% filter ||= {} %>
+<% ransack ||= nil %>
+
+<% field_key = filter[:key] %>
+<%# Handle both :target and :target_id styles %>
+<% id_key = field_key.to_s.end_with?("_id") ? field_key : "#{field_key}_id" %>
+<% param_name = "q[#{id_key}_eq]" %>
+<% current_value = ransack&.send("#{id_key}_eq") %>
+<% collection = filter[:collection] || [] %>
+<% include_blank = filter.fetch(:include_blank, "Any") %>
+
+<div class="space-y-1">
+  <label for="<%= param_name %>" class="block text-xs font-medium text-textMuted uppercase tracking-wider">
+    <%= filter[:label] || field_key.to_s.gsub(/_id$/, '').humanize %>
+  </label>
+  <div class="relative">
+    <select
+      name="<%= param_name %>"
+      id="<%= param_name %>"
+      class="input-select"
+    >
+      <% if include_blank %>
+        <option value=""><%= include_blank.is_a?(String) ? include_blank : "Any" %></option>
+      <% end %>
+      <% collection.each do |item| %>
+        <% label, value = item.is_a?(Array) ? item : [item.to_s, item] %>
+        <option value="<%= value %>" <%= 'selected' if current_value.to_s == value.to_s %>><%= label %></option>
+      <% end %>
+    </select>
+    <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-textMuted">
+      <span class="icon icon-sm icon-chevron-down"></span>
+    </div>
+  </div>
+</div>

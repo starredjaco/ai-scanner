@@ -1,0 +1,51 @@
+<%#
+  Company Switcher Dropdown
+  Only shown when user belongs to multiple companies (M:N relationship)
+%>
+<% if current_user&.companies&.count.to_i > 1 %>
+  <div class="mb-4 pb-4 border-b border-borderPrimary ml-2"
+       data-controller="company-switcher"
+       data-action="click@window->company-switcher#closeIfClickedAway keydown@window->company-switcher#handleKeydown">
+
+    <label class="block text-xs font-medium text-contentSecondary uppercase tracking-wide mb-2">
+      Company
+    </label>
+
+    <div class="relative">
+      <button type="button"
+              data-action="click->company-switcher#toggle"
+              class="flex items-center justify-between w-full px-2 py-2 text-sm text-left bg-transparent border border-borderPrimary rounded-lg transition-colors group cursor-pointer">
+        <span class="truncate font-normal text-white group-hover:text-primary transition-colors min-w-0">
+          <%= current_user.current_company&.name || "Select Company" %>
+        </span>
+        <div class="flex items-center gap-2 shrink-0 whitespace-nowrap">
+          <%= render "layouts/partials/tier_badge", tier: current_user.current_company&.tier %>
+          <span class="icon icon-sm icon-chevron-down text-contentSecondary group-hover:text-primary transition-all duration-200"
+                data-company-switcher-target="chevron"></span>
+        </div>
+      </button>
+
+      <div data-company-switcher-target="menu"
+           class="absolute left-0 right-0 mt-1 bg-backgroundSecondary border border-borderPrimary rounded-lg shadow-lg z-50 hidden overflow-hidden">
+        <ul class="py-1 max-h-64 overflow-y-auto">
+          <% current_user.companies.order(:name).each do |company| %>
+            <li>
+              <%= button_to switch_company_path(company),
+                    method: :patch,
+                    class: "flex items-center justify-between w-full px-2 py-2 text-sm text-left font-normal transition-colors cursor-pointer #{company.id == current_user.current_company_id ? 'text-contentPrimary' : 'text-contentSecondary hover:bg-zinc-800 hover:text-white'}",
+                    form: { class: "w-full", data: { turbo: true } } do %>
+                <div class="flex items-center gap-2 min-w-0">
+                  <span class="icon icon-sm icon-check shrink-0 <%= company.id == current_user.current_company_id ? 'text-primary' : 'invisible' %>"></span>
+                  <span class="truncate"><%= company.name %></span>
+                </div>
+                <span class="shrink-0 whitespace-nowrap">
+                  <%= render "layouts/partials/tier_badge", tier: company.tier %>
+                </span>
+              <% end %>
+            </li>
+          <% end %>
+        </ul>
+      </div>
+    </div>
+  </div>
+<% end %>

@@ -1,0 +1,101 @@
+<div class="mb-4" data-report-redesigned-sort-by-value="max_score_desc">
+  <div class="relative shrink-0" data-controller="custom-dropdown" data-action="click@window->custom-dropdown#closeIfClickedAway">
+    <button
+      type="button"
+      class="flex items-center gap-2 px-3 py-2 rounded-lg border border-borderPrimary bg-backgroundSecondary hover:border-zinc-500 transition-colors"
+      data-action="click->custom-dropdown#toggle"
+      data-report-redesigned-target="sortButton">
+      <span class="text-sm font-sans text-contentPrimary" data-report-redesigned-target="sortLabel">
+        Sort: Max Score (high to low)
+      </span>
+      <span class="icon icon-sm icon-chevron-up-down text-contentTertiary"></span>
+    </button>
+    <ul class="absolute left-0 top-full mt-1 min-w-[220px] bg-backgroundSecondary border border-borderPrimary rounded-lg shadow-lg z-10 p-1 hidden"
+        data-custom-dropdown-target="menu">
+      <li>
+        <a href="#"
+           data-action="click->report-redesigned#sortProbeCards"
+           data-sort-value="max_score_desc"
+           data-sort-label="Sort: Max Score (high to low)"
+           class="flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm font-sans text-white hover:bg-zinc-700 transition-colors">
+          <span class="icon icon-sm icon-check text-primary"></span>
+          Max Score (high to low)
+        </a>
+      </li>
+      <li>
+        <a href="#"
+           data-action="click->report-redesigned#sortProbeCards"
+           data-sort-value="max_score_asc"
+           data-sort-label="Sort: Max Score (low to high)"
+           class="flex items-center pl-9 pr-3 gap-2.5 py-2 rounded-lg text-sm font-sans text-white hover:bg-zinc-700 transition-colors">
+          <span class="icon icon-sm icon-check text-primary hidden"></span>
+          Max Score (low to high)
+        </a>
+      </li>
+      <li>
+        <a href="#"
+           data-action="click->report-redesigned#sortProbeCards"
+           data-sort-value="alphabetical_asc"
+           data-sort-label="Sort: A - Z"
+           class="flex items-center pl-9 pr-3 gap-2.5 py-2 rounded-lg text-sm font-sans text-white hover:bg-zinc-700 transition-colors">
+          <span class="icon icon-sm icon-check text-primary hidden"></span>
+          A - Z
+        </a>
+      </li>
+      <li>
+        <a href="#"
+           data-action="click->report-redesigned#sortProbeCards"
+           data-sort-value="alphabetical_desc"
+           data-sort-label="Sort: Z - A"
+           class="flex items-center pl-9 pr-3 gap-2.5 py-2 rounded-lg text-sm font-sans text-white hover:bg-zinc-700 transition-colors">
+          <span class="icon icon-sm icon-check text-primary hidden"></span>
+          Z - A
+        </a>
+      </li>
+    </ul>
+  </div>
+</div>
+
+<div class="block" data-report-redesigned-target="probesContent">
+  <%
+    probe_results = report.probe_results.to_a
+  %>
+  <% if probe_results.any? %>
+    <%
+
+      # Sort by Max Score descending (highest first), then ASR as tiebreaker
+      probe_results.sort_by! do |pr|
+        max_score = pr.max_score || 0
+        asr = pr.total > 0 ? (pr.passed.to_f / pr.total * 100) : 0
+        [-max_score, -asr] # Negative for descending order
+      end
+
+      # Compute expensive booleans once, pass as locals to avoid N+1 queries
+      show_variants = report.should_show_variants_section?
+      has_variant_data = report.has_variant_data?
+
+      # Preload expensive variant display data once for all probe cards
+      all_industries = show_variants ? report.all_selected_variant_industries_grouped : nil
+
+      # Batch-preload all variant per-probe data (attack counts, success rates, subindustry maps, attempts)
+      preloaded = has_variant_data ? report.preloaded_variant_data : nil
+    %>
+    <div class="space-y-4">
+      <% probe_results.each_with_index do |probe_result, index| %>
+        <%= render partial: 'admin/reports/probe_card', locals: {
+          probe_result: probe_result,
+          index: index,
+          report: report,
+          all_industries: all_industries,
+          preloaded: preloaded,
+          show_variants: show_variants
+        } %>
+      <% end %>
+    </div>
+  <% else %>
+    <div class="bg-zinc-900 rounded-lg border border-zinc-700 p-8 text-center">
+      <span class="icon icon-lg icon-inbox text-zinc-600 mx-auto mb-3 block" style="width: 3rem; height: 3rem;"></span>
+      <p class="text-contentSecondary font-sans text-sm">No probe results available</p>
+    </div>
+  <% end %>
+</div>

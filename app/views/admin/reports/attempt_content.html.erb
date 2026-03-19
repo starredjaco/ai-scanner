@@ -1,0 +1,45 @@
+<%= turbo_frame_tag @attempt_frame_id do %>
+  <% empty_tags = [] %>
+
+  <%# Prompt section %>
+  <div>
+    <div class="flex items-center gap-2 mb-2">
+      <h4 class="text-base text-zinc-400 font-sans">Prompt</h4>
+      <button type="button"
+              class="text-white hover:text-zinc-300 transition-colors"
+              data-action="click->report-redesigned#copyToClipboard"
+              data-content="<%= sanitize(@prompt, tags: empty_tags).gsub('"', '&quot;') %>"
+              title="Copy prompt">
+        <span class="icon icon-sm icon-copy"></span>
+      </button>
+    </div>
+    <div class="bg-zinc-800/50 rounded-lg overflow-hidden <%= 'scroll-fade' if @prompt.length > 200 %>">
+      <div class="p-3 max-h-64 overflow-y-auto scrollbar-thin scrollbar-thumb-zinc-600 scrollbar-track-zinc-800/50">
+        <pre class="font-mono text-sm text-zinc-300 whitespace-pre-wrap m-0"><%= sanitize(@prompt, tags: empty_tags) %></pre>
+      </div>
+    </div>
+  </div>
+
+  <%# Response section %>
+  <div>
+    <div class="flex items-center gap-2 mb-2">
+      <h4 class="text-base text-zinc-400 font-sans">Response</h4>
+      <button type="button"
+              class="text-white hover:text-zinc-300 transition-colors"
+              data-action="click->report-redesigned#copyToClipboard"
+              data-content="<%= sanitize(@response, tags: empty_tags).gsub('"', '&quot;') %>"
+              title="Copy response">
+        <span class="icon icon-sm icon-copy"></span>
+      </button>
+    </div>
+    <div class="bg-zinc-800/50 rounded-lg overflow-hidden <%= 'scroll-fade' if @response.length > 200 %>">
+      <div class="p-3 max-h-64 overflow-y-auto scrollbar-thin scrollbar-thumb-zinc-600 scrollbar-track-zinc-800/50">
+        <% if @response.present? %>
+          <pre class="font-mono text-sm text-zinc-300 whitespace-pre-wrap m-0"><%= sanitize(@response, tags: empty_tags) %></pre>
+        <% else %>
+          <span class="text-sm text-contentTertiary italic">[No response generated]</span>
+        <% end %>
+      </div>
+    </div>
+  </div>
+<% end %>
