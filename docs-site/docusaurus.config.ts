@@ -75,6 +75,11 @@ const config: Config = {
           label: "Docs",
         },
         {
+          href: "https://0din.ai/marketing/scanner",
+          label: "Demo",
+          position: "right",
+        },
+        {
           href: "https://github.com/0din-ai/ai-scanner",
           label: "GitHub",
           position: "right",
