@@ -56,6 +56,8 @@ To report a security vulnerability, see [SECURITY.md](SECURITY.md).
 
 Join us on [Discord](https://discord.gg/z3sxHrvDhS) in the **#0din-scanner** channel for questions, feedback, and discussion.
 
+Help shape 0DIN Scanner — [quick 2-min survey](https://forms.gle/HCm9wDYQB7yurb2X6).
+
 ## License
 
 This project is licensed under the Apache License 2.0. See [LICENSE](LICENSE) for details.
