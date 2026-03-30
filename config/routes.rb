@@ -23,6 +23,7 @@ Rails.application.routes.draw do
     # === Settings & Configuration ===
     resources :metadata
     get "release_notes", to: "release_notes#show", as: :release_notes
+    get "glossary", to: "glossary#show", as: :glossary
     resources :environment_variables do
       collection do
         post :batch

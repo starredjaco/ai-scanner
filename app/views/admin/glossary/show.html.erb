@@ -1,0 +1,178 @@
+<%= render partial: "admin/shared/show_header", locals: { title: "Glossary" } %>
+
+<div class="py-6 space-y-6">
+
+  <%# ── Scanning Workflow ── %>
+  <div class="rounded-lg bg-backgroundPrimary border border-borderPrimary">
+    <div class="px-6 py-4 border-b border-borderPrimary">
+      <div class="flex items-center gap-3">
+        <span class="icon icon-lg icon-play text-primary"></span>
+        <h2 class="text-xl font-sans font-semibold text-primary tracking-wide">Scanning Workflow</h2>
+      </div>
+      <p class="mt-1 text-sm text-contentSecondary">The core concepts behind running a security assessment.</p>
+    </div>
+    <div class="p-6">
+      <dl class="space-y-5">
+        <%= render "admin/glossary/term", term: "Scan", definition: "A configured security assessment that combines one or more Targets with a set of Probes. Each scan run produces a Report per target. Scans can be one-time or scheduled to repeat on a recurring basis (hourly, daily, weekly, or monthly)." %>
+        <%= render "admin/glossary/term", term: "Target", definition: "The AI system being tested. There are two types: API targets (LLMs accessed via a REST API, such as OpenAI or Anthropic) and Webchat targets (browser-based chat interfaces tested via automated browser interaction)." %>
+        <%= render "admin/glossary/term", term: "Probe", definition: "A single security test case — a crafted prompt (or sequence of prompts) sent to the target AI model to test for a specific vulnerability. Each probe has a detector, a social impact score, a disclosure status, and belongs to one or more taxonomy categories." %>
+        <%= render "admin/glossary/term", term: "Report", definition: "The result of running a scan against a single target. Contains probe results, detector statistics, token usage, and an overall Attack Success Rate. Reports progress through statuses: Pending, Starting, Running, Processing, and finally Completed, Failed, Stopped, or Interrupted." %>
+        <%= render "admin/glossary/term", term: "Attempt", definition: "A single prompt-response pair within a probe execution. Each probe may run multiple attempts. An attempt is marked as either \"Attack Successful\" (the model responded in a vulnerable way) or \"Attack Failed\" (the model defended itself)." %>
+        <%= render "admin/glossary/term", term: "Rerun", definition: "Running an existing scan again with the same configuration. Useful for tracking how a target's security posture changes over time." %>
+      </dl>
+    </div>
+  </div>
+
+  <%# ── Metrics & Scoring ── %>
+  <div class="rounded-lg bg-backgroundPrimary border border-borderPrimary">
+    <div class="px-6 py-4 border-b border-borderPrimary">
+      <div class="flex items-center gap-3">
+        <span class="icon icon-lg icon-chart text-primary"></span>
+        <h2 class="text-xl font-sans font-semibold text-primary tracking-wide">Metrics & Scoring</h2>
+      </div>
+      <p class="mt-1 text-sm text-contentSecondary">How security assessment results are measured and reported.</p>
+    </div>
+    <div class="p-6">
+      <dl class="space-y-5">
+        <%= render "admin/glossary/term", term: "ASR (Attack Success Rate)", definition: "The primary security metric. The percentage of probe attempts that successfully bypassed the target model's defenses. A higher ASR means the target is more vulnerable. Calculated as: successful attacks / total attempts x 100." %>
+        <%= render "admin/glossary/term", term: "Social Impact Score (SIS)", definition: "A 1-5 severity rating assigned to each probe, indicating the real-world harm potential if the attack succeeds. The levels are: 1 = Minimal Risk, 2 = Moderate Risk, 3 = Significant Risk, 4 = High Risk, 5 = Critical Risk." %>
+        <%= render "admin/glossary/term", term: "Security Grade", definition: "An A+ through F letter grade for a scan, computed from the Attack Success Rate adjusted by a risk penalty. Probes with higher Social Impact Scores that succeed carry heavier penalties." %>
+        <%= render "admin/glossary/term", term: "Max Score", definition: "The highest detector confidence score reached by a probe across all its attempts, shown as a percentage. Indicates how definitively the detector classified a response as vulnerable." %>
+        <%= render "admin/glossary/term", term: "Successful Attacks / Passed", definition: "The number of probe attempts where the attack succeeded — meaning the target model responded in a way that the detector classified as vulnerable. Shown as a ratio (e.g., 3 / 40)." %>
+        <%= render "admin/glossary/term", term: "Vulnerabilities Found", definition: "The distinct count of unique security vulnerabilities identified in a report, separate from the total number of individual attack attempts." %>
+        <%= render "admin/glossary/term", term: "Token Usage", definition: "The number of LLM tokens consumed during a scan, broken down into input tokens (prompts sent) and output tokens (model responses). Used for cost estimation and monitoring." %>
+      </dl>
+    </div>
+  </div>
+
+  <%# ── Probes & Classification ── %>
+  <div class="rounded-lg bg-backgroundPrimary border border-borderPrimary">
+    <div class="px-6 py-4 border-b border-borderPrimary">
+      <div class="flex items-center gap-3">
+        <span class="icon icon-lg icon-beaker text-primary"></span>
+        <h2 class="text-xl font-sans font-semibold text-primary tracking-wide">Probes & Classification</h2>
+      </div>
+      <p class="mt-1 text-sm text-contentSecondary">How probes are categorized and sourced.</p>
+    </div>
+    <div class="p-6">
+      <dl class="space-y-5">
+        <%= render "admin/glossary/term", term: "Community Probes", definition: "Open-source probes sourced from NVIDIA's garak framework. Displayed with a \"Community\" badge. These cover a broad set of AI safety tests including prompt injection, jailbreaks, and data leakage." %>
+      </dl>
+    </div>
+  </div>
+
+  <%# ── Detectors ── %>
+  <div class="rounded-lg bg-backgroundPrimary border border-borderPrimary">
+    <div class="px-6 py-4 border-b border-borderPrimary">
+      <div class="flex items-center gap-3">
+        <span class="icon icon-lg icon-shield-check text-primary"></span>
+        <h2 class="text-xl font-sans font-semibold text-primary tracking-wide">Detectors</h2>
+      </div>
+      <p class="mt-1 text-sm text-contentSecondary">The components that evaluate whether an attack succeeded.</p>
+    </div>
+    <div class="p-6">
+      <dl class="space-y-5">
+        <%= render "admin/glossary/term", term: "Detector", definition: "A classifier that evaluates the target model's response to determine if a probe attack succeeded. Each probe is linked to a specific detector. The detector produces a score: a successful attack means the model's guardrails were bypassed." %>
+        <%= render "admin/glossary/term", term: "Mitigation Bypass", definition: "The most common detector type. It checks whether the model's response lacks standard safety refusal phrases (e.g., \"I cannot assist with that\"). If no refusal is detected and the response is substantive, the attack is considered successful — the model's safety mitigations were bypassed." %>
+        <%= render "admin/glossary/term", term: "Detector Statistics", definition: "A per-detector breakdown within a report, showing the Attack Success Rate and the ratio of successful vs. total attacks for each detector used in the scan." %>
+      </dl>
+    </div>
+  </div>
+
+  <%# ── Taxonomy & Techniques ── %>
+  <div class="rounded-lg bg-backgroundPrimary border border-borderPrimary">
+    <div class="px-6 py-4 border-b border-borderPrimary">
+      <div class="flex items-center gap-3">
+        <span class="icon icon-lg icon-list text-primary"></span>
+        <h2 class="text-xl font-sans font-semibold text-primary tracking-wide">Taxonomy & Techniques</h2>
+      </div>
+      <p class="mt-1 text-sm text-contentSecondary">How attack methods are classified.</p>
+    </div>
+    <div class="p-6">
+      <dl class="space-y-5">
+        <%= render "admin/glossary/term", term: "Taxonomy Category", definition: "The top-level classification of attack approaches. The five categories are: Fictionalizing, Language, Possible Worlds, Rhetoric, and Stratagems. Each probe is mapped to one or more categories." %>
+        <%= render "admin/glossary/term", term: "Strategy", definition: "The mid-level grouping within a taxonomy category. Examples include Roleplaying, Prompt Injection, Persuasion and Manipulation, and Scatter Shot." %>
+        <%= render "admin/glossary/term", term: "Technique", definition: "A specific attack method at the leaf level of the taxonomy. Examples include DAN (Do Anything Now), Goal Hijacking, Base64 encoding, ROT13 obfuscation, and Prompt Injection. Each probe is tagged with one or more techniques." %>
+        <%= render "admin/glossary/term", term: "DAN (Do Anything Now)", definition: "A well-known jailbreak technique that prompts the model to adopt an unrestricted persona or mode, attempting to bypass safety restrictions by asking the AI to \"step outside its usual boundaries.\"" %>
+        <%= render "admin/glossary/term", term: "Prompt Injection", definition: "An attack strategy where crafted user input overrides or bypasses the model's original system instructions. Analogous to SQL injection in traditional software, but targeting AI model behavior." %>
+      </dl>
+    </div>
+  </div>
+
+  <%# ── Targets & Configuration ── %>
+  <div class="rounded-lg bg-backgroundPrimary border border-borderPrimary">
+    <div class="px-6 py-4 border-b border-borderPrimary">
+      <div class="flex items-center gap-3">
+        <span class="icon icon-lg icon-computer text-primary"></span>
+        <h2 class="text-xl font-sans font-semibold text-primary tracking-wide">Targets & Configuration</h2>
+      </div>
+      <p class="mt-1 text-sm text-contentSecondary">Setting up and managing AI systems for testing.</p>
+    </div>
+    <div class="p-6">
+      <dl class="space-y-5">
+        <%= render "admin/glossary/term", term: "API Target", definition: "An LLM accessible via a REST API. Configured with a model type (the provider adapter, e.g., OpenAI, Anthropic, Azure) and a specific model name. Requires API credentials stored as environment variables." %>
+        <%= render "admin/glossary/term", term: "Webchat Target", definition: "A browser-based chat interface tested via automated browser interaction. Configured with a URL and CSS selectors that identify the chat input field and response area. Currently in experimental phase." %>
+        <%= render "admin/glossary/term", term: "Model Type", definition: "The provider adapter used to communicate with the AI model. Maps to a garak generator class (e.g., OpenAI, Anthropic, Azure OpenAI, Ollama, LiteLLM). Determines which API protocol and authentication method is used." %>
+        <%= render "admin/glossary/term", term: "Target Validation", definition: "An automatic connectivity check performed after a target is created or modified. A background job sends a simple test prompt to verify the target responds. Status progresses from Validating to either Good (ready) or Bad (misconfigured). Scans cannot run against unvalidated targets." %>
+        <%= render "admin/glossary/term", term: "Tokens per Second (tok/s)", definition: "The measured throughput rate of a target, collected during actual scans. Used to estimate how long future scans will take. Displayed on the target detail page with the number of samples collected." %>
+        <%= render "admin/glossary/term", term: "Environment Variable", definition: "An encrypted key-value pair used to pass API keys and other credentials to the scanning engine. Can be global (applies to all targets) or target-specific (overrides global values for that target). Values are encrypted at rest." %>
+        <%= render "admin/glossary/term", term: "JSON Config", definition: "Optional JSON configuration passed to the provider adapter when communicating with an API target. Used for provider-specific settings. Supports $API_KEY placeholders that are replaced with values from environment variables at runtime." %>
+      </dl>
+    </div>
+  </div>
+
+  <%# ── Integrations ── %>
+  <div class="rounded-lg bg-backgroundPrimary border border-borderPrimary">
+    <div class="px-6 py-4 border-b border-borderPrimary">
+      <div class="flex items-center gap-3">
+        <span class="icon icon-lg icon-arrows-path text-primary"></span>
+        <h2 class="text-xl font-sans font-semibold text-primary tracking-wide">Integrations</h2>
+      </div>
+      <p class="mt-1 text-sm text-contentSecondary">Connecting scan results to external systems.</p>
+    </div>
+    <div class="p-6">
+      <dl class="space-y-5">
+        <%= render "admin/glossary/term", term: "Output Server", definition: "An external system where scan results are automatically forwarded after completion. Configured per scan. Supports Splunk (via HTTP Event Collector) and Rsyslog (syslog protocol)." %>
+        <%= render "admin/glossary/term", term: "SIEM", definition: "Security Information and Event Management system. A category of security tools (like Splunk) that collect, analyze, and correlate security events. The scanner can forward results to your SIEM via output servers." %>
+      </dl>
+    </div>
+  </div>
+
+  <%# ── System Settings ── %>
+  <div class="rounded-lg bg-backgroundPrimary border border-borderPrimary">
+    <div class="px-6 py-4 border-b border-borderPrimary">
+      <div class="flex items-center gap-3">
+        <span class="icon icon-lg icon-cog text-primary"></span>
+        <h2 class="text-xl font-sans font-semibold text-primary tracking-wide">System Settings</h2>
+      </div>
+      <p class="mt-1 text-sm text-contentSecondary">Configuration options that affect scan execution.</p>
+    </div>
+    <div class="p-6">
+      <dl class="space-y-5">
+        <%= render "admin/glossary/term", term: "Parallel Scans Limit", definition: "The maximum number of scans that can run simultaneously across the entire system. Higher values allow more concurrent scans but require more system resources." %>
+        <%= render "admin/glossary/term", term: "Parallel Attempts", definition: "The number of simultaneous requests sent to the AI model during a single scan. Higher values make scans faster but may trigger API rate limits. Recommended: 5-10 for OpenAI, 3-5 for Anthropic, 20-50 for local models." %>
+        <%= render "admin/glossary/term", term: "Evaluation Threshold", definition: "Controls how sensitive the vulnerability detection is. Lower values are stricter and flag more potential issues. Can be set globally or overridden per target." %>
+        <%= render "admin/glossary/term", term: "Estimated Run Time", definition: "A time estimate for how long a scan will take, computed from the target's measured throughput (tokens per second) and the number of selected probes. Shown during scan configuration." %>
+      </dl>
+    </div>
+  </div>
+
+  <%# ── Key Platforms ── %>
+  <div class="rounded-lg bg-backgroundPrimary border border-borderPrimary">
+    <div class="px-6 py-4 border-b border-borderPrimary">
+      <div class="flex items-center gap-3">
+        <span class="icon icon-lg icon-info text-primary"></span>
+        <h2 class="text-xl font-sans font-semibold text-primary tracking-wide">Key Platforms</h2>
+      </div>
+      <p class="mt-1 text-sm text-contentSecondary">The technologies and platforms behind the scanner.</p>
+    </div>
+    <div class="p-6">
+      <dl class="space-y-5">
+        <%= render "admin/glossary/term", term: "0din (0din.ai)", definition: "The threat intelligence platform and organization behind this scanner. Maintains the probe library, threat feed, and research taxonomy for AI safety assessments." %>
+        <%= render "admin/glossary/term", term: "garak", definition: "An open-source LLM vulnerability scanner developed by NVIDIA. Provides the Python-based scanning engine that this application orchestrates. Probes are executed through garak's probe/detector/generator architecture." %>
+        <%= render "admin/glossary/term", term: "LLM (Large Language Model)", definition: "An AI model trained on large amounts of text data that can generate human-like responses. Examples include GPT-4, Claude, and Llama. These are the systems that the scanner tests for security vulnerabilities." %>
+      </dl>
+    </div>
+  </div>
+
+</div>

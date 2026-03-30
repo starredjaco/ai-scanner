@@ -140,6 +140,13 @@ class AdminMenu
         icon_path: "menu/users.svg",
         priority: 7
       ),
+      MenuItem.new(
+        id: "glossary",
+        label_text: "Glossary",
+        url_path: "/glossary",
+        icon_path: "menu/glossary.svg",
+        priority: 8
+      ),
       # Companies menu - super admins only (via policy)
       companies_menu_item
     ].compact.sort_by(&:priority)
@@ -153,7 +160,7 @@ class AdminMenu
       label_text: "Companies",
       url_path: "/companies",
       icon_path: "menu/companies.svg",
-      priority: 8
+      priority: 9
     )
   end
 

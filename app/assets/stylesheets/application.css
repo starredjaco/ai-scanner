@@ -413,6 +413,10 @@
   color: #FFF;
 }
 
+@utility glossary-term {
+  @apply pb-5 last:pb-0;
+}
+
 /* Global Checkbox Styling */
 @layer base {
   input[type="checkbox"] {
