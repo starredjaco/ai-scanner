@@ -62,6 +62,10 @@ Join us on [Discord](https://discord.gg/z3sxHrvDhS) in the **#0din-scanner** cha
 
 Help shape 0DIN Scanner — [quick 2-min survey](https://forms.gle/HCm9wDYQB7yurb2X6).
 
+## Commercial
+
+Enterprise users looking for a turn-key SaaS solution can inquire for details via the [following form](https://0din.ai/demo_requests/new).
+
 ## License
 
 This project is licensed under the Apache License 2.0. See [LICENSE](LICENSE) for details.
